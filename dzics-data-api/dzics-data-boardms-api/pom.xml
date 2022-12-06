@@ -15,7 +15,6 @@
     <description>看板路由管理API</description>
 
     <dependencies>
-
         <dependency>
             <groupId>com.dzics</groupId>
             <artifactId>dzics-data-redis-base</artifactId>
