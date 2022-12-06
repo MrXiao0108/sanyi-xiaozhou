@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.pdm.db.dao.DzProductionPlanDayDao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.pdm.model.entity.DzProductionPlanDay">
+        <id column="plan_day_id" property="planDayId"/>
+        <result column="planned_quantity" property="plannedQuantity"/>
+        <result column="completed_quantity" property="completedQuantity"/>
+        <result column="percentage_complete" property="percentageComplete"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        plan_day_id
+        , line_id, planned_quantity, completed_quantity, percentage_complete, org_code, del_flag, create_by, create_time, update_by, update_time
+    </sql>
+    <update id="insertList" parameterType="java.util.List">
+        insert into dz_production_plan_day
+        (plan_id,planned_quantity,detector_time,org_code,create_time)
+        values
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item.id},#{item.plannedQuantity},(select DATE_SUB(curdate(),INTERVAL 0 DAY)),#{item.orgCode},now()
+        </foreach>
+    </update>
+
+    <select id="list" resultType="com.dzics.data.pdm.model.vo.SelectProductionPlanRecordDo"
+            parameterType="com.dzics.data.pdm.model.dto.SelectProductionPlanRecordVo">
+        select
+        pday.plan_day_id as planDayId,
+        pday.plan_id as planId,
+        pday.planned_quantity as plannedQuantity,
+        pday.completed_quantity as completedQuantity,
+        pday.detector_time as detectorTime,
+        pday.percentage_complete as percentageComplete,
+        pday.output_rate as outputRate,
+        pday.pass_rate as passRate,
+        pday.org_code as orgCode,
+        pday.del_flag as delFlag,
+        pday.create_by as createBy,
+        pday.create_time as createTime,
+        pday.update_by as updateBy,
+        pday.update_time as updateTime,
+        ord.order_no as orderNo,
+        line.line_name as lineName
+        from ${planDayTable} as pday
+        left join dz_production_plan plan on pday.plan_id=plan.id
+        left join dz_production_line line on plan.line_id=line.id
+        left join dz_order ord on line.order_id=ord.id
+        where pday.del_flag=0
+        <if test="orgCode!=null">
+            and pday.org_code=#{orgCode}
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            and ord.order_no like concat('%',#{orderNo},'%')
+        </if>
+        <if test="lineId!=null and lineId!=''">
+            and line.id =#{lineId}
+        </if>
+        <if test="startTime!=null">
+            and pday.detector_time &gt;= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and pday.detector_time &lt;= #{endTime}
+        </if>
+        <choose>
+            <when test="type != null and type != '' ">
+                ORDER BY
+                ${field} ${type}
+            </when>
+            <otherwise>
+                order by detectorTime desc
+            </otherwise>
+        </choose>
+    </select>
+    <select id="selDateLinNo" resultType="com.dzics.data.pdm.model.entity.PlanDayLineNo">
+        SELECT da.plan_day_id                                AS planDayId,
+               da.plan_id                                    AS planId,
+               da.planned_quantity                           AS plannedQuantity,
+               da.completed_quantity                         AS completedQuantity,
+               da.percentage_complete                        AS percentageComplete,
+               da.output_rate                                AS outputRate,
+               da.pass_rate                                  AS passRate,
+               (SELECT lin.statistics_equiment_id
+                FROM dz_production_line AS lin
+                WHERE lin.id = (SELECT plan.line_id
+                                FROM dz_production_plan AS plan
+                                WHERE plan.id = da.plan_id)) as statisticsEquimentId
+        FROM `dz_production_plan_day` AS da
+        WHERE detector_time = #{now,jdbcType=DATE};
+    </select>
+    <select id="planAnalysisGraphical" resultType="java.util.Map">
+        SELECT
+        percentage_complete as percentageComplete,
+        output_rate as outputRate,
+        pass_rate as passRate,
+        detector_time as detectorTime
+        FROM
+        ${planDay}
+        WHERE
+        plan_id = #{lineId,jdbcType=BIGINT}
+        <if test="startTime != null ">
+            AND detector_time &gt;= #{startTime,jdbcType=DATE}
+        </if>
+        <if test="endTime != null ">
+            AND detector_time &lt;= #{endTime,jdbcType=DATE}
+        </if>
+    </select>
+    <select id="getActivation" resultType="com.dzics.data.pdm.model.vo.ActivationDetailsDo">
+        SELECT myDate.datelist                  as dateData,
+               IFNULL(p.percentage_complete, 0) as activationData
+        FROM (SELECT datelist
+              FROM dim_date
+              where datelist &gt;= #{startTime}
+                and datelist &lt;= #{endTime}) AS myDate
+                 LEFT JOIN (SELECT planDay.percentage_complete,
+                                   planDay.detector_time
+                            FROM dz_production_plan plan
+                                     LEFT JOIN ${planDay} as planDay ON planDay.plan_id = plan.id
+                            WHERE plan.line_id = #{id}
+                              AND plan.del_flag = 0) AS p ON p.detector_time = myDate.datelist
+        GROUP BY myDate.datelist
+    </select>
+    <select id="getProductionPlanFiveDay" resultType="java.math.BigDecimal">
+        SELECT percentage_complete AS percentageComplete
+        FROM ${tableKey}
+        WHERE plan_id = #{planId}
+          AND detector_time >= #{localDate}
+    </select>
+    <select id="getPlanAnalysis" resultType="java.util.Map">
+        SELECT percentage_complete AS percentageComplete,
+               output_rate         AS outputRate,
+               pass_rate           AS passRate
+        FROM ${tableKey}
+        WHERE plan_id = #{lineId}
+          AND detector_time >= #{localDate}
+    </select>
+    <select id="selDateLinNoSignal" resultType="com.dzics.data.pdm.model.entity.PlanDayLineNo">
+        SELECT da.plan_day_id                                AS planDayId,
+               da.plan_id                                    AS planId,
+               da.planned_quantity                           AS plannedQuantity,
+               da.completed_quantity                         AS completedQuantity,
+               da.percentage_complete                        AS percentageComplete,
+               da.output_rate                                AS outputRate,
+               da.pass_rate                                  AS passRate,
+               (SELECT lin.statistics_equiment_id
+                FROM dz_production_line AS lin
+                WHERE lin.id = (SELECT plan.line_id
+                                FROM dz_production_plan AS plan
+                                WHERE plan.id = da.plan_id)) as statisticsEquimentId
+        FROM `dz_production_plan_day_signal` AS da
+        WHERE detector_time = #{now,jdbcType=DATE};
+    </select>
+    <select id="getLineProductionData" resultType="java.util.Map">
+        select
+        plan.plan_id as planId,
+        sum(plan.completed_quantity) as completedQuantity
+        from ${tableKey} plan
+        where plan.plan_id in
+        <foreach collection="collect" item="planId" open="(" close=")" separator=",">
+            #{planId}
+        </foreach>
+        <if test="startTime!=null">
+            and plan.detector_time &gt;= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and plan.detector_time &lt;= #{endTime}
+        </if>
+        group by plan.plan_id
+    </select>
+
+    <insert id="insertListSignal" parameterType="java.util.List">
+        insert into dz_production_plan_day_signal
+        (plan_id,planned_quantity,detector_time,org_code,create_time)
+        values
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item.id},#{item.plannedQuantity},(select DATE_SUB(curdate(),INTERVAL 0 DAY)),#{item.orgCode},now()
+        </foreach>
+    </insert>
+
+    <select id="getPlanId" resultType="java.lang.String">
+        SELECT id
+        FROM dz_production_plan
+        WHERE line_id = #{lineId}
+    </select>
+
+    <select id="getPlanAnalysisEqLocalData" resultType="java.util.Map">
+        SELECT percentage_complete AS percentageComplete,
+               output_rate         AS outputRate,
+               pass_rate           AS passRate
+        FROM ${tableKey}
+        WHERE plan_id = #{lineId}
+          AND detector_time = #{localDate}
+    </select>
+    <select id="getPlanAnalysisEqLocal" resultType="java.util.Map">
+        SELECT percentage_complete AS percentageComplete,
+               planned_quantity    AS plannedQuantity,
+               completed_quantity  AS completedQuantity
+        FROM ${tableKey}
+        WHERE plan_id = #{lineId}
+          AND detector_time = #{localDate}
+    </select>
+    <select id="getProductionInformation" resultType="java.util.Map">
+        SELECT product.product_name    AS productName,
+               plan.planned_quantity   AS plannedQuantity,
+               plan.completed_quantity AS completedQuantity
+        FROM dz_product AS product
+                 LEFT JOIN ${tableKey} AS plan ON product.product_id = plan.plan_id
+        WHERE plan_id = #{lineId}
+          AND detector_time = #{localDate}
+    </select>
+    <select id="getPlayDay" resultType="com.dzics.data.pdm.model.entity.DzProductionPlanDay">
+        SELECT
+            pd.*
+        FROM
+            dz_production_plan_day AS pd
+                LEFT JOIN dz_production_plan AS pp ON pp.id = pd.plan_id
+        WHERE
+            pp.line_id = #{lineId}
+          AND pd.detector_time = #{localDate}
+    </select>
+    <select id="getOneDayPlanDay" resultType="com.dzics.data.pdm.model.dto.GetOneDayPlanDayDto">
+        SELECT
+            pday.*,
+            line.order_no AS orderNo,
+            line.line_name AS lineName
+        FROM
+            dz_production_plan_day AS pday
+                LEFT JOIN dz_production_plan AS plan ON plan.id = pday.plan_id
+                LEFT JOIN dz_production_line AS line ON line.id = plan.line_id
+        ORDER BY
+            create_time DESC
+    </select>
+</mapper>

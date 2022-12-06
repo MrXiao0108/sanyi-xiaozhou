@@ -1,0 +1,53 @@
+package com.dzics.data.appoint.changsha.mom.exception;
+
+import com.dzics.data.common.base.exception.enums.CustomExceptionType;
+
+public class CustomMomException extends RuntimeException {
+    //异常错误编码
+    private int code;
+    //异常信息
+    private String message;
+    //版本   必填
+    private int version;
+
+    //任务ID  随机生成32位UUID，单次下发指令唯一标识   必填
+    private String taskId;
+
+    private CustomMomException() {
+    }
+
+    public CustomMomException(CustomExceptionType exceptionTypeEnum, String message, Integer version, String taskId) {
+        this.code = exceptionTypeEnum.getCode();
+        this.message = message;
+        this.version = version;
+        this.taskId = taskId;
+    }
+
+    public CustomMomException(CustomExceptionType exceptionTypeEnum, String message) {
+        this.code = exceptionTypeEnum.getCode();
+        this.message = message;
+    }
+
+    public CustomMomException(Integer code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
+
+    public int getCode() {
+        return code;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>hu-nan</artifactId>
+        <groupId>com.dzics</groupId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>chang-sha</artifactId>
+    <version>1.0.0</version>
+    <modules>
+        <module>shui-xiang</module>
+        <module>xiaozhou-paoguang</module>
+        <module>xiaozhou-jingjiagong</module>
+        <module>xiaozhou-cujiagong</module>
+    </modules>
+    <packaging>pom</packaging>
+    <name>chang-sha</name>
+    <description>长沙看板数据服务父POM</description>
+
+</project>

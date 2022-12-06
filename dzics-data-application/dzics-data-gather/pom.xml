@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>dzics-data-application</artifactId>
+        <groupId>com.dzics</groupId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>dzics-data-gather</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>dzics-data-gather</name>
+    <description>数据采集层父pom</description>
+
+    <modules>
+        <module>dzics-data-udp-web</module>
+        <module>dzics-data-transfer</module>
+        <module>dzics-data-acquisition</module>
+    </modules>
+</project>

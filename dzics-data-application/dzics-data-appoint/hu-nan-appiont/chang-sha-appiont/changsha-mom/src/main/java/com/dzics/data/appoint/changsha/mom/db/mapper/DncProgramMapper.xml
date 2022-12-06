@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.appoint.changsha.mom.db.dao.DncProgramDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.appoint.changsha.mom.model.entity.DncProgram">
+        <id column="id" property="id"/>
+        <result column="line_id" property="lineId"/>
+        <result column="task_number" property="taskNumber"/>
+        <result column="material_code" property="materialCode"/>
+        <result column="routing_code" property="routingCode"/>
+        <result column="sequenceNumber" property="sequencenumber"/>
+        <result column="working_procedure" property="workingProcedure"/>
+        <result column="work_center" property="workCenter"/>
+        <result column="machine_code" property="machineCode"/>
+        <result column="programname" property="programname"/>
+        <result column="tokenstr" property="tokenstr"/>
+        <result column="state" property="state"/>
+        <result column="dnc_response" property="dncResponse"/>
+        <result column="feedback_detail" property="feedbackDetail"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, line_id, task_number, material_code, routing_code, sequenceNumber, working_procedure, work_center,
+        machine_code, programname, tokenstr, state, dnc_response, feedback_detail, del_flag, org_code, create_time,
+        create_by, update_by, update_time
+    </sql>
+
+    <select id="successLately" resultType="com.dzics.data.appoint.changsha.mom.model.entity.DncProgram">
+        SELECT
+        *
+        FROM
+        dnc_program
+        WHERE
+        state = '3'
+        ORDER BY
+        update_time
+        LIMIT 1;
+    </select>
+    <select id="getDncLog" resultType="com.dzics.data.appoint.changsha.mom.model.entity.DncProgram">
+        SELECT
+        machine_code as machineCode,
+        programname,
+        `state`,
+        dnc_response as dncResponse,
+        create_time as createTime
+        FROM
+        dnc_program
+        WHERE 1=1
+        <if test="equipmentCode != null and equipmentCode != ''">
+            AND machine_code = #{equipmentCode}
+        </if>
+        <if test="programName != null and programName != ''">
+            AND programname = #{programName}
+        </if>
+        <if test="dncResponse != null and dncResponse != ''">
+            AND dnc_response LIKE concat('%',#{dncResponse},'%')
+        </if>
+        <if test="state != null and state !=''">
+            AND `state` = #{state}
+        </if>
+        <if test="beginTime != null and beginTime !=''">
+            AND create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null and endTime !=''">
+            AND create_time &lt;= #{endTime}
+        </if>
+        <if test="(filed != null and filed != '') and (type != null and type != '')">
+            ORDER BY #{filed} #{type}
+        </if>
+    </select>
+    <select id="getOneNewDate" resultType="com.dzics.data.appoint.changsha.mom.model.entity.DncProgram">
+        SELECT
+            *
+        FROM
+            dnc_program
+        WHERE
+            state = 3
+          AND line_id = #{lineId}
+          AND machine_code = #{equipmentNo}
+        ORDER BY
+            create_time DESC
+            LIMIT 1
+    </select>
+</mapper>

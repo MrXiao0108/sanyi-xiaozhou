@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.pdm.db.dao.DzEquipmentProNumDao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.pdm.model.entity.DzEquipmentProNum">
+        <id column="id" property="id"/>
+        <!--        <result column="day_id" property="deviceId"/>-->
+        <result column="batch_number" property="batchNumber"/>
+        <result column="model_number" property="modelNumber"/>
+        <result column="now_num" property="nowNum"/>
+        <result column="total_num" property="totalNum"/>
+        <!--        <result column="work_data" property="workData"/>-->
+        <!--        <result column="work_start_time" property="workStartTime"/>-->
+        <!--        <result column="work_end_time" property="workEndTime"/>-->
+        <result column="org_code" property="orgCode"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="work_year" property="workYear"/>
+        <result column="work_mouth" property="workMouth"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id
+        , device_id, batch_number, model_number, now_num, total_num, work_data, work_start_time, work_end_time, org_code, del_flag, create_by, create_time, update_by, update_time,work_year,work_mouth
+    </sql>
+
+
+    <select id="listEquipmentData" resultType="com.dzics.data.pdm.db.model.dao.EquipmentDataDo"
+            parameterType="com.dzics.data.pdm.db.model.dto.SelectEquipmentDataVo">
+        select * from ( SELECT
+        ord.order_no as orderNo,
+        line.line_name as lineName,
+        eq.equipment_no as equipmentNo,
+        eq.equipment_code as equipmentCode,
+        eq.equipment_name as equipmentName,
+        lday.work_data as workData,
+        lday.work_name as workName,
+        lday.start_time as workStartTime,
+        lday.end_time as workStartEnd,
+        lday.sort_no as sortNo,
+        eq.clear_count_status as clearCountStatus,
+        IFNULL(
+        (select sum(pnum.badness_num)
+        FROM ${tableKey} as pnum
+        where pnum.day_id=lday.id and pnum.del_flag=0
+        ),0 )as badnessNum,
+        IFNULL(
+        (select sum(pnum.now_num)
+        FROM ${tableKey} as pnum
+        where pnum.day_id=lday.id and pnum.del_flag=0
+        ),0 )as nowNum,
+        IFNULL(
+        (select sum(pnum.rough_num)
+        FROM ${tableKey} as pnum
+        where pnum.day_id=lday.id and pnum.del_flag=0
+        ) ,0)as roughNum,
+        IFNULL(
+        (select sum(pnum.qualified_num)
+        FROM ${tableKey} as pnum
+        where pnum.day_id=lday.id and pnum.del_flag=0
+        ) ,0)as qualifiedNum,
+        lday.create_time
+        FROM dz_line_shift_day lday
+        LEFT JOIN dz_equipment eq on lday.eq_id=eq.id
+        LEFT JOIN dz_production_line line on eq.line_id=line.id
+        LEFT JOIN dz_order ord on line.order_id=ord.id
+        where lday.del_flag=0 and eq.equipment_type=#{equipmentType} and lday.work_data &lt;=(select current_date)
+        <if test="orgCode!=null">
+            and lday.org_code=#{orgCode}
+        </if>
+        <if test="departName!=null and departName!=''">
+            and dep.depart_name like concat('%',#{departName},'%')
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            and ord.order_no like concat('%',#{orderNo},'%')
+        </if>
+        <if test="lineId!=null and lineId!=''">
+            and line.id =#{lineId}
+        </if>
+        <if test="equipmentCode!=null and equipmentCode!=''">
+            and eq.equipment_code like concat('%',#{equipmentCode},'%')
+        </if>
+        <if test="workName!=null and workName!=''">
+            and lday.work_name like concat('%',#{workName},'%')
+        </if>
+        <if test="startTime!=null ">
+            and lday.work_data &gt;= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and lday.work_data &lt;= #{endTime}
+        </if>
+        <if test="equipmentNo!=null and equipmentNo!=''">
+            and eq.equipment_no like concat('%',#{equipmentNo},'%')
+        </if>
+        ) as temp
+        <choose>
+            <when test="type != null and type != '' ">
+                ORDER BY
+                temp.${field} ${type}
+            </when>
+            <otherwise>
+                order BY temp.workData desc,temp.sortNo asc
+            </otherwise>
+        </choose>
+    </select>
+    <select id="detailsList" resultType="com.dzics.data.pdm.db.model.dao.PlanRecordDetailsListDo">
+        SELECT sig.now_num       AS totalNum,
+               sig.rough_num     AS roughNum,
+               sig.badness_num   AS badnessNum,
+               sig.qualified_num AS qualifiedNum,
+               prn.product_name  AS productName,
+               prn.product_no    AS productNo,
+               lin.line_name     AS lineName
+        FROM ${tableKey} AS sig
+                 LEFT JOIN dz_product AS prn ON sig.model_number = prn.product_no
+                 LEFT JOIN dz_production_line AS lin ON sig.equiment_id = lin.statistics_equiment_id
+        WHERE sig.equiment_id = #{statisticsEquimentId}
+          AND sig.order_no = #{orderNo}
+          AND sig.work_data = #{detectorTime}
+    </select>
+    <select id="getlistPro" resultType="com.dzics.data.pdm.db.model.dao.SelectProductionDetailsDo">
+        SELECT
+        sig.work_data AS workDate,
+        prn.product_name AS productName,
+        prn.product_no AS productNo,
+        sig.product_type AS productType,
+        sig.order_no AS orderNo,
+        sig.line_no AS lineNo,
+        SUM(sig.now_num) AS totalNum,
+        SUM(sig.rough_num) AS roughNum,
+        SUM(sig.badness_num) AS badnessNum,
+        SUM(sig.qualified_num) AS qualifiedNum
+        FROM
+        dz_equipment_pro_num_signal AS sig
+        LEFT JOIN dz_product AS prn ON sig.model_number = prn.product_no
+        WHERE
+        1 = 1
+        <if test="eqid != null and eqid !='' ">
+            AND sig.equiment_id = #{eqid}
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            and sig.order_no =#{orderNo}
+        </if>
+        <if test="startTime!=null ">
+            and sig.work_data &gt; #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and sig.work_data &lt; #{endTime}
+        </if>
+        <if test="productName!=null and productName!=''">
+            and prn.product_name = #{productName}
+        </if>
+        GROUP BY model_number
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+    <select id="getlistPro_COUNT" resultType="long">
+        SELECT
+        count(0)
+        FROM
+        dz_equipment_pro_num_signal AS sig
+        LEFT JOIN dz_product AS prn ON sig.model_number = prn.product_no
+        WHERE
+        1 = 1
+        <if test="eqid != null and eqid !='' ">
+            AND sig.equiment_id = #{eqid}
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            AND sig.order_no =#{orderNo}
+        </if>
+        <if test="startTime!=null ">
+            AND sig.work_data &gt;= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND sig.work_data &lt;= #{endTime}
+        </if>
+        <if test="productName!=null and productName!=''">
+            AND prn.product_name = #{productName}
+        </if>
+    </select>
+
+    <select id="getEquipmentDataDetails"
+            resultType="com.dzics.data.pdm.db.model.dao.EquipmentDataDetailsDo">
+        SELECT
+        da.woDate as workDate,
+        (
+        select sum(pnum.now_num)
+        FROM ${tableKey} pnum
+        where pnum.equiment_id=#{equimentId} and pnum.work_data=da.woDate and pnum.del_flag=0
+        ) as workNum
+        FROM (
+        SELECT
+        dd.work_data as woDate
+        from dz_line_shift_day dd
+        where dd.eq_id=#{equimentId}
+        <if test="startTime!=null">
+            and dd.work_data &gt;=#{startTime}
+        </if>
+        <if test="endTime!=null">
+            and dd.work_data &lt;=#{endTime}
+        </if>
+        GROUP BY dd.work_data
+        ORDER BY dd.work_data asc
+        ) as da
+    </select>
+
+    <select id="getDeviceProdoctSum"
+            resultType="com.dzics.data.pdm.db.model.dao.SelectEquipmentProductionDo">
+        SELECT
+        rep.equipmentCode AS equipmentNo,
+        rep.equipmentName,
+        rep.lineName,
+        rep.workData AS workDate,
+        rep.orderNo,
+        rep.equimentId,
+        SUM(rep.nowNum) AS productionQuantity
+        FROM
+        day_daily_report as rep
+        WHERE
+        rep.lineId =#{lineId}
+        <if test="orderNo!=null and orderNo!=''">
+            and rep.orderNo =#{orderNo}
+        </if>
+        <if test="equipmentName!=null and equipmentName!=''">
+            and rep.equipmentName = #{equipmentName}
+        </if>
+        <if test="startTime!=null">
+            and rep.workData &gt; #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and rep.workData &lt; #{endTime}
+        </if>
+        GROUP BY
+        rep.equimentId,
+        rep.workData
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+    <select id="getDeviceProdoctSum_COUNT" resultType="java.lang.Long">
+        SELECT
+        COUNT(0)
+        FROM
+        day_daily_report as rep
+        WHERE
+        rep.lineId =#{lineId}
+        <if test="orderNo!=null and orderNo!=''">
+            and rep.orderNo =#{orderNo}
+        </if>
+        <if test="equipmentName!=null and equipmentName!=''">
+            and rep.equipmentName = #{equipmentName}
+        </if>
+        <if test="startTime!=null">
+            and rep.workData &gt; #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and rep.workData &lt; #{endTime}
+        </if>
+        GROUP BY
+        rep.equimentId,
+        rep.workData
+    </select>
+    <select id="listProductionEquipmentDetails"
+            resultType="com.dzics.data.pdm.db.model.dao.SelectEquipmentProductionDetailsDo">
+        SELECT pnum.product_type as productName,
+        SUM(pnum.now_num) as productionQuantity
+        FROM ${tableKey} as pnum
+        LEFT JOIN dz_product as prd ON pnum.model_number = prd.product_no
+        WHERE 1 = 1
+        <if test="orderNo!=null and orderNo!=''">
+            AND pnum.order_no =#{orderNo}
+        </if>
+        AND equiment_id = #{equimentId}
+        AND work_data = #{workDate}
+        GROUP BY pnum.product_type
+    </select>
+    <select id="workNowLocalDate" resultType="java.util.Map">
+        SELECT SUM(pro.now_num)       AS nowNum,
+               SUM(pro.qualified_num) AS qualifiedNum,
+               SUM(pro.rough_num)     AS roughNum
+        FROM dz_equipment_pro_num as pro
+        WHERE work_data = #{now,jdbcType=DATE}
+          AND line_no = #{linNo,jdbcType=VARCHAR}
+          AND pro.equiment_id = #{statisticsEquimentId,jdbcType=BIGINT}
+    </select>
+
+    <select id="workNowLocalDateSignal" resultType="java.util.Map">
+        SELECT SUM(pro.now_num)       AS nowNum,
+               SUM(pro.qualified_num) AS qualifiedNum,
+               SUM(pro.rough_num)     AS roughNum
+        FROM dz_equipment_pro_num_signal as pro
+        WHERE work_data = #{now,jdbcType=DATE}
+          AND line_no = #{linNo,jdbcType=VARCHAR}
+          AND pro.equiment_id = #{statisticsEquimentId,jdbcType=BIGINT}
+    </select>
+
+    <select id="dayData" resultType="com.dzics.data.pdm.db.model.dao.DayDataResultDo">
+        SELECT d.datelist as date,
+        (
+        SELECT
+        SUM(pnum.badness_num)
+        FROM ${tableKey} as pnum WHERE d.datelist = pnum.work_data and pnum.equiment_id=#{equimentId} ) AS badnessNum,
+            (
+            SELECT
+            SUM (pnum.qualified_num) AS NowNum
+            FROM
+               ${tableKey} pnum WHERE d.datelist = pnum.work_data and pnum.equiment_id=#{equimentId} ) AS qualifiedNum
+        FROM
+            dim_date d
+        WHERE
+            d.datelist >= #{first}
+          AND d.datelist &lt;= #{last}
+        ORDER BY d.datelist asc
+    </select>
+    <select id="monthData" resultType="com.dzics.data.pdm.db.model.dao.DayDataResultDo">
+        select '2021-666' as date,
+        SUM(pnum.badness_num) as badnessNum,
+        SUM(pnum.qualified_num) as qualifiedNum
+        from ${tableKey} pnum
+        where pnum.equiment_id=#{equimentId}
+          and DATE_FORMAT(pnum.work_data
+            , '%Y-%m') = #{month}
+    </select>
+    <!--    根据产线id查询日生产数据-->
+    <select id="dayDataByLine" resultType="com.dzics.data.pdm.db.model.dao.DayDataResultDo">
+        SELECT d.datelist as date,
+        ( SELECT SUM(pnum.badness_num)
+        FROM ${tableKey} as pnum left join dz_line_shift_day as lsd on pnum.day_id=lsd.id WHERE d.datelist = pnum.work_data and lsd.line_id=#{lineId} and pnum.equiment_id=( select line.statistics_equiment_id from dz_production_line as line where line.id=#{lineId} ) ) AS badnessNum,
+            (SELECT SUM (pnum.qualified_num) AS NowNum
+            FROM
+               ${tableKey} pnum left join dz_line_shift_day as lsd on pnum.day_id=lsd.id WHERE d.datelist = pnum.work_data and lsd.line_id=#{lineId} and pnum.equiment_id=( select line.statistics_equiment_id from dz_production_line as line where line.id=#{lineId} ) ) AS qualifiedNum
+        FROM dim_date d
+        WHERE d.datelist >= #{first}
+          AND d.datelist &lt;= #{last}
+        ORDER BY d.datelist asc
+    </select>
+    <!--    根据产线id查询月生产数据-->
+    <select id="monthDataByLine" resultType="com.dzics.data.pdm.db.model.dao.DayDataResultDo">
+        SELECT '2021-666' AS date,
+        IFNULL(SUM(pnum.badnessNum),0) AS badnessNum,
+        IFNULL(SUM(pnum.qualifiedNum),0) AS qualifiedNum
+        FROM day_daily_report pnum
+        WHERE DATE_FORMAT(pnum.workData
+            , '%Y-%m') = #{month}
+          AND pnum.orderNo = #{orderNo}
+          AND pnum.equimentId = #{equipmentId}
+    </select>
+    <!--    查询当日生产相关数据-->
+    <select id="outputCapacity" resultType="com.dzics.data.common.base.model.dao.QualifiedAndOutputDo">
+        SELECT IFNULL(SUM(pnum.roughNum), 0)     AS roughNum,
+               IFNULL(SUM(pnum.qualifiedNum), 0) AS qualifiedNum,
+               IFNULL(SUM(pnum.nowNum), 0)       AS nowNum
+        FROM day_daily_report AS pnum
+        WHERE pnum.workData = #{nowDate}
+          AND pnum.lineId = #{lineId}
+          AND pnum.equimentId = #{statisticsEquimentId}
+          AND pnum.orderNo = #{orderNo}
+    </select>
+    <select id="getOutputByEqId" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(now_num), 0)
+        FROM ${tableKey}
+        WHERE order_no = #{orderNo}
+          AND equiment_id = #{eqId}
+          AND work_data = #{localDate}
+    </select>
+
+
+
+    <select id="getOutputByEqIdAndWorkNameJoinShiftDay" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(now_num), 0)
+        FROM ${tableKey} a
+        inner join dz_line_shift_day b
+        on a.day_id=b.id
+        WHERE a.order_no = #{orderNo}
+          AND a.work_data = #{localDate}
+          and b.work_name= #{workName}
+             group by a.line_no
+    </select>
+
+    <select id="getBadOutputByEqIdAndWorkNameJoinShiftDay" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(badness_num), 0)
+        FROM ${tableKey} a
+        inner join dz_line_shift_day b
+        on a.day_id=b.id
+        WHERE a.order_no = #{orderNo}
+          AND a.work_data = #{localDate}
+          and b.work_name= #{workName}
+          group by a.line_no
+    </select>
+
+    <select id="getEqIdData" resultType="com.dzics.data.common.base.model.custom.MachiningNumTotal">
+        SELECT
+        proNum.equiment_id AS equimentId,
+        SUM(proNum.now_num) AS dayNum,
+        sum(proNum.qualified_num) AS qualifiedNum,
+        sum(proNum.badness_num) AS badnessNum,
+        sum(proNum.rough_num) AS roughNum
+        FROM
+        ${tableKey} AS proNum
+        WHERE
+        proNum.order_no = #{orderNo}
+        AND work_data = #{now}
+        AND proNum.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY proNum.equiment_id
+    </select>
+    <select id="getEqIdDataWorkShift" resultType="com.dzics.data.common.base.model.custom.MachiningNumTotal">
+        SELECT
+        SUM(sig.now_num) AS dayNum,
+        wor.eq_id AS equimentId
+        FROM
+        ${tableKey} AS sig
+        LEFT JOIN `dz_line_shift_day` AS wor ON wor.id = sig.day_id
+        WHERE
+        sig.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND wor.work_data = #{now}
+        GROUP BY
+        sig.equiment_id
+    </select>
+    <select id="getProductName" resultType="com.dzics.data.common.base.model.dao.WorkNumberName">
+        select product_type as productName,
+               model_number as modelNumber
+        from ${tableKey}
+        where equiment_id = #{id}
+        order by create_time desc
+    </select>
+    <select id="getMonthlyCapacity" resultType="com.dzics.data.pdm.db.model.dao.GetMonthlyCapacityDo">
+        select datelist,
+               (SELECT IFNULL(SUM(qualified_num), 0)
+                from ${tableKey} pnum
+                where pnum.equiment_id = #{eqId}
+                  and pnum.work_data = datelist) as qualified,
+               (SELECT IFNULL(SUM(badness_num), 0)
+                from ${tableKey} pnum
+                where pnum.equiment_id = #{eqId}
+                  and pnum.work_data = datelist) as badness
+        from dim_date
+        where DATE_FORMAT(datelist, '%y-%m') = DATE_FORMAT(CURDATE(), '%y-%m')
+    </select>
+    <select id="getEqIdDataTotal" resultType="com.dzics.data.common.base.model.custom.MachiningNumTotal">
+        SELECT
+        proNum.equiment_id AS equimentId,
+        SUM(proNum.now_num) AS totalNum
+        FROM
+        ${tableKey} AS proNum
+        WHERE
+        proNum.order_no = #{orderNo}
+        AND proNum.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY proNum.equiment_id
+    </select>
+
+    <select id="getLineSumQuantityWorkShitf" resultType="com.dzics.data.common.base.model.custom.LineNumberTotal">
+        SELECT SUM(sig.now_num) AS dayNum,
+               wor.eq_id        AS equimentId
+        FROM ${tableKey} AS sig
+                 LEFT JOIN `dz_line_shift_day` AS wor ON wor.id = sig.day_id
+        WHERE sig.equiment_id = #{eqId}
+          AND wor.work_data = #{now}
+        GROUP BY sig.equiment_id
+    </select>
+
+    <select id="getInputOutputDefectiveProducts" resultType="com.dzics.data.pdm.db.model.dao.SocketProQuantity">
+        SELECT
+        equiment_id AS equimentId,
+        now_num AS nowNum,
+        rough_num AS roughNum,
+        badness_num AS badnessNum
+        FROM
+        ${tableKey}
+        WHERE
+        equiment_id IN
+        <foreach collection="deviceIds" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND work_data = #{now};
+    </select>
+    <select id="getSumData" resultType="java.lang.Long">
+        select sum(pnum.now_num) as dayData
+        from ${tableKey} as pnum
+        where pnum.equiment_id = #{eqID}
+    </select>
+    <select id="getDataNgAndOk" resultType="java.util.Map">
+        SELECT (SELECT IFNULL(SUM(now_num), 0)
+                FROM ${tableKey} pnum
+                WHERE pnum.equiment_id = #{eqId}
+                  AND pnum.work_data = dd.datelist) as ok,
+               (SELECT IFNULL(SUM(badness_num), 0)
+                FROM ${tableKey} pnum
+                WHERE pnum.equiment_id = #{eqId}
+                  AND pnum.work_data = dd.datelist) as ng
+        FROM dim_date dd
+        WHERE dd.datelist &lt;= date_sub(CURDATE(), interval 0 day)
+          AND dd.datelist &gt;= date_sub(CURDATE(), interval 4 day)
+    </select>
+    <select id="dailyPassRate" resultType="com.dzics.data.common.base.model.dao.QualifiedAndOutputDo">
+        SELECT IFNULL(SUM(pnum.rough_num), 0)     as roughNum,
+               IFNULL(SUM(pnum.qualified_num), 0) as qualifiedNum,
+               IFNULL(SUM(pnum.now_num), 0)       as nowNum
+        FROM ${tableKey} as pnum
+        where pnum.work_data = #{date}
+          and pnum.equiment_id = #{equipmentId}
+    </select>
+    <select id="workNowLocalDateSignalIds" resultType="java.util.Map">
+        SELECT
+        SUM(pro.now_num) AS nowNum ,
+        SUM(pro.qualified_num) AS qualifiedNum ,
+        SUM(pro.rough_num) AS roughNum ,
+        pro.equiment_id AS equimentId
+        FROM
+        dz_equipment_pro_num_signal as pro
+        WHERE
+        work_data = #{now,jdbcType=DATE}
+        AND pro.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY
+        equiment_id
+    </select>
+    <select id="workNowLocalDateIds" resultType="java.util.Map">
+        SELECT
+        SUM(pro.now_num) AS nowNum,
+        SUM(pro.qualified_num) AS qualifiedNum,
+        SUM(pro.rough_num) AS roughNum ,
+        pro.equiment_id AS equimentId
+        FROM
+        dz_equipment_pro_num as pro
+        WHERE
+        work_data = #{now,jdbcType=DATE}
+        AND pro.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY
+        pro.equiment_id
+    </select>
+    <select id="dayAndHour" resultType="java.util.Map">
+        select
+        pnum.equiment_id as equimentId,
+        IFNULL(pnum.now_num,0) as nowNum,
+        pnum.work_hour as workHour
+        from ${tableKey} pnum
+        where pnum.work_data=#{today}
+        and pnum.equiment_id in
+        <foreach collection="eqIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+    <select id="listEquipmentDataV2" resultType="com.dzics.data.pdm.db.model.dao.EquipmentDataDo">
+        SELECT
+        orderNo,
+        lineName,
+        equipmentCode AS equipmentNo,
+        equipmentName,
+        workData,
+        workName,
+        nowNum,
+        roughNum,
+        qualifiedNum,
+        badnessNum,
+        time_range as timeRange
+        FROM
+        day_daily_report
+        WHERE
+        equipmentType = #{equipmentType}
+        <if test="orgCode != null and orgCode !='' ">
+            and org_code = #{orgCode}
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            and orderNo = #{orderNo}
+        </if>
+        <if test="lineId!=null and lineId!=''">
+            and lineId = #{lineId}
+        </if>
+        <if test="equipmentCode!=null and equipmentCode!=''">
+            and equipmentCode = #{equipmentCode}
+        </if>
+        <if test="workName!=null and workName!=''">
+            and workName = #{workName}
+        </if>
+        <if test="startTime != null ">
+            and workData &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and workData &lt;= #{endTime}
+        </if>
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+    <select id="allEquipmentDailyCapacity" resultType="java.util.Map">
+        select pnum.equiment_id             as equimentId,
+               IFNULL(sum(pnum.now_num), 0) as nowNum
+        from ${tableKey} pnum
+        where pnum.order_no = #{orderNo}
+          and pnum.line_no = #{lineNo}
+          and pnum.work_data = #{nowDate}
+        group by pnum.equiment_id
+    </select>
+
+    <select id="getWorkShift" resultType="java.util.Map">
+        SELECT wor.workName                AS workName,
+               wor.workData                AS workData,
+               IFNULL(wor.qualifiedNum, 0) AS qualifiedNum,
+               IFNULL(wor.badnessNum, 0)   AS badnessNum,
+               IFNULL(wor.nowNum, 0)       AS nowNum
+        FROM day_daily_report AS wor
+        WHERE wor.work_mouth = #{mouth}
+          AND wor.equimentId = #{equimentId}
+          AND wor.orderNo = #{orderNo}
+    </select>
+    <select id="getWorkShiftNowNum" resultType="java.util.Map">
+        SELECT wor.workName          AS workName,
+               wor.workData          AS workData,
+               IFNULL(wor.nowNum, 0) AS nowNum
+        FROM day_daily_report AS wor
+        WHERE wor.work_mouth = #{mouth}
+          AND wor.equimentId = #{equimentId}
+          AND wor.orderNo = #{orderNo}
+    </select>
+
+    <select id="getEqIdDataTotalZhiHuang" resultType="com.dzics.data.pdm.model.dao.MachiningNumTotal">
+        SELECT
+        proNum.equiment_id AS equimentId,
+        SUM(proNum.now_num) AS totalNum
+        FROM
+        ${tableKey} AS proNum
+        WHERE
+        proNum.order_no = #{orderNo}
+        AND proNum.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY proNum.equiment_id
+    </select>
+
+    <select id="getEqIdDataZhiHuang" resultType="com.dzics.data.pdm.model.dao.MachiningNumTotal">
+        SELECT
+        proNum.equiment_id AS equimentId,
+        SUM(proNum.now_num) AS dayNum
+        FROM
+        ${tableKey} AS proNum
+        WHERE
+        proNum.order_no = #{orderNo}
+        AND work_data = #{now}
+        AND proNum.equiment_id IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        GROUP BY proNum.equiment_id
+    </select>
+    <select id="getWork" resultType="java.util.Map">
+        SELECT wor.workName AS workName,
+        wor.workData AS workData,
+        IFNULL(wor.qualifiedNum, 0) AS qualifiedNum,
+        IFNULL(wor.badnessNum, 0) AS badnessNum,
+        IFNULL(wor.nowNum, 0) AS nowNum
+        FROM day_daily_report AS wor
+        WHERE
+        <foreach collection="mouthDate" item="mouthDate" separator="or" open="(" close=")">
+            #{mouthDate}
+        </foreach>
+        AND wor.equimentId = #{equimentId}
+        AND wor.orderNo = #{orderNo}
+    </select>
+
+</mapper>

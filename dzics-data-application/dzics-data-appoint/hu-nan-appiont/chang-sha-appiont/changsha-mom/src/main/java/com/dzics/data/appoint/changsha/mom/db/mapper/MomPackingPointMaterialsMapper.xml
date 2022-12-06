@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.appoint.changsha.mom.db.dao.MomPackingPointMaterialsDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.appoint.changsha.mom.model.entity.MomPackingPointMaterials">
+        <id column="id" property="id" />
+        <result column="order_id" property="orderId" />
+        <result column="line_id" property="lineId" />
+        <result column="order_no" property="orderNo" />
+        <result column="line_no" property="lineNo" />
+        <result column="point_code" property="pointCode" />
+        <result column="materials" property="materials" />
+        <result column="create_time" property="createTime" />
+        <result column="create_by" property="createBy" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, order_id, line_id, order_no, line_no, point_code, materials, create_time, create_by
+    </sql>
+</mapper>

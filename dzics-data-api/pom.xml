@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>dzdc</artifactId>
+        <groupId>com.dzics</groupId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>dzics-data-api</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>dzics-data-rabbitmq-api</module>
+        <module>dzics-data-boardms-api</module>
+        <module>dzics-data-ums-api</module>
+        <module>dzics-data-fms-api</module>
+        <module>dzics-data-pms-api</module>
+        <module>dzics-data-logms-api</module>
+        <module>dzics-data-pub-api</module>
+        <module>dzics-data-pdm-api</module>
+        <module>dzics-data-tool-api</module>
+        <module>dzics-data-zkjob-api</module>
+        <module>dzics-data-maintain-api</module>
+        <module>dzics-data-work-report-api</module>
+    </modules>
+    <name>dzics-data-api</name>
+    <description>业务API抽象层</description>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.dzics</groupId>
+            <artifactId>dzics-data-common-util</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dzics</groupId>
+            <artifactId>dzics-data-common-base</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+
+</project>

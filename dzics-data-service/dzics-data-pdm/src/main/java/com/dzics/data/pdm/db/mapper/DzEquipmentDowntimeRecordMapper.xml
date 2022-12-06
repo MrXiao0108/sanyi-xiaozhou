@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.pdm.db.dao.DzEquipmentDowntimeRecordDao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.pdm.model.entity.DzEquipmentDowntimeRecord">
+        <id column="id" property="id"/>
+        <result column="line_no" property="lineNo"/>
+        <result column="equipment_no" property="equipmentNo"/>
+        <result column="equipment_type" property="equipmentType"/>
+        <result column="stop_time" property="stopTime"/>
+        <result column="reset_time" property="resetTime"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="stop_data" property="stopData"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id
+                , line_no, equipment_no, equipment_type, stop_time, reset_time, org_code, del_flag, create_by, create_time, update_by, update_time
+    </sql>
+
+    <select id="getByEquipmentNo" resultType="com.dzics.data.pdm.model.vo.GetByEquipmentNoDo"
+            parameterType="com.dzics.data.pdm.model.dto.GetByEquipmentNoVo">
+        SELECT
+        eq.equipment_name AS equipmentName,
+        eq.equipment_code AS equipmentCode,
+        eqa.stop_data AS stopData,
+        eqa.duration AS duration,
+        eqa.group_id AS groupId,
+        eqa.order_no AS orderNo,
+        line_name AS lineName,
+        stop_time as stopTime,
+        reset_time as resetTime
+        FROM
+        dz_equipment_time_analysis AS eqa
+        JOIN dz_equipment AS eq ON eqa.device_id = eq.id
+        JOIN dz_production_line AS lin ON eq.line_id = lin.id
+        WHERE eqa.work_state = 4
+        AND eqa.device_id = #{id}
+        AND eqa.order_no = #{orderNo}
+        <if test="startTime!=null and startTime!='' ">
+            and stop_data &gt;=#{startTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and stop_data &lt;=#{endTime}
+        </if>
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+    <select id="getByEquipmentNo_COUNT"
+            parameterType="com.dzics.data.pdm.model.dto.GetByEquipmentNoVo" resultType="long">
+        SELECT
+        count(0)
+        FROM
+        dz_equipment_time_analysis AS eqa
+        JOIN dz_equipment AS eq ON eqa.device_id = eq.id
+        JOIN dz_production_line AS lin ON eq.line_id = lin.id
+        WHERE eqa.work_state = 4
+        AND eqa.device_id = #{id}
+        AND eqa.order_no = #{orderNo}
+        <if test="startTime!=null and startTime!='' ">
+            and stop_data &gt;=#{startTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and stop_data &lt;=#{endTime}
+        </if>
+    </select>
+
+    <select id="getTimeDuration" resultType="java.lang.Long">
+        SELECT SUM(duration)
+        FROM dz_equipment_downtime_record
+        WHERE equipment_no = #{equipmentNo,jdbcType=VARCHAR}
+          AND order_no = #{orderNo}
+          AND line_no = #{lineNo}
+          AND equipment_type = #{equipmentType,jdbcType=INTEGER}
+          AND stop_data &gt;= #{startTime,jdbcType=DATE}
+          AND stop_data &lt;= #{endTime,jdbcType=DATE}
+    </select>
+
+    <select id="selectDate" resultType="java.lang.String">
+        select datelist
+        from dim_date
+        where datelist &gt;= #{startTime}
+          and datelist &lt;= #{endTime}
+    </select>
+    <select id="getTimeDurationNowDay" resultType="java.lang.Long">
+        SELECT SUM(duration)
+        FROM dz_equipment_downtime_record
+        WHERE equipment_no = #{equipmentNo,jdbcType=VARCHAR}
+          AND equipment_type = #{equipmentType,jdbcType=INTEGER}
+          AND stop_data = #{dayNow,jdbcType=DATE}
+    </select>
+    <select id="getTimeDurationHistory" resultType="java.lang.Long">
+        SELECT SUM(duration)
+        FROM dz_equipment_downtime_record
+        WHERE equipment_no = #{equipmentNo,jdbcType=VARCHAR}
+          AND equipment_type = #{equipmentType,jdbcType=INTEGER}
+    </select>
+</mapper>

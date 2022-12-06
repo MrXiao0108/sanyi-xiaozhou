@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.appoint.changsha.mom.db.dao.DzicsInsideLogDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.appoint.changsha.mom.model.entity.DzicsInsideLog">
+        <id column="id" property="id" />
+        <result column="business_type" property="businessType" />
+        <result column="request_content" property="requestContent" />
+        <result column="throw_msg" property="throwMsg" />
+        <result column="create_time" property="createTime" />
+        <result column="order_id" property="orderId" />
+        <result column="order_no" property="orderNo" />
+        <result column="line_id" property="lineId" />
+        <result column="line_no" property="lineNo" />
+        <result column="create_by" property="createBy" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, business_type, request_content, throw_msg, create_time, order_id, order_no, line_id, line_no, create_by
+    </sql>
+
+    <select id="getBackInsideLogs" resultType="com.dzics.data.appoint.changsha.mom.model.entity.DzicsInsideLog">
+        SELECT
+        id,
+        CASE business_type
+        WHEN 1 THEN 'Mom订单下发'
+        WHEN 4 THEN '生产叫料'
+        WHEN 17 THEN 'Mom订单工序下发'
+        WHEN 103 THEN '满料拖出'
+        END business_type,
+        request_content,
+        redone_content,
+        throw_msg,
+        case `state`
+        when 0 then '成功'
+        when 1 then '失败'
+        end  `state`,
+        create_time,
+        order_id,
+        order_no,
+        line_id,
+        line_no,
+        create_by
+        FROM
+        dzics_inside_log
+        WHERE 1 = 1
+        <if test="beginTime != null and beginTime != ''">
+            AND create_time >= #{beginTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time &lt;= #{endTime}
+        </if>
+        <if test="businessType != null and businessType != ''">
+            AND business_type = #{businessType}
+        </if>
+        <if test="state != null and state != ''">
+            AND state = #{state}
+        </if>
+        <if test="msg != null and msg != ''">
+            AND throw_msg LIKE concat('%',#{msg},'%')
+        </if>
+        <if test="filed != null and type != ''">
+            ORDER BY #{filed} #{type}
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>dzics-data-service</artifactId>
+        <groupId>com.dzics</groupId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>dzics-data-boardms</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0.0</version>
+    <name>dzics-data-boardms</name>
+    <description>看板路由管理实现层</description>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.dzics</groupId>
+            <artifactId>dzics-data-boardms-api</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!--pageHelper 分页插件-->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+    </dependencies>
+
+
+</project>

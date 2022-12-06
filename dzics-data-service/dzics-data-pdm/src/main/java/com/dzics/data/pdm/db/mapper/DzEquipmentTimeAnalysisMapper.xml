@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.pdm.db.dao.DzEquipmentTimeAnalysisDao">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.pdm.model.entity.DzEquipmentTimeAnalysis">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="line_no" property="lineNo"/>
+        <result column="equipment_no" property="equipmentNo"/>
+        <result column="equipment_type" property="equipmentType"/>
+        <result column="work_state" property="workState"/>
+        <result column="stop_time" property="stopTime"/>
+        <result column="reset_time" property="resetTime"/>
+        <result column="duration" property="duration"/>
+        <result column="stop_data" property="stopData"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, order_no, line_no, equipment_no, equipment_type, work_state, stop_time, reset_time, duration, stop_data, org_code, del_flag, create_by, create_time, update_by, update_time
+    </sql>
+
+    <select id="getDeviceStateDetailsStopTime"
+            resultType="com.dzics.data.pdm.model.vo.DeviceStateDetails">
+        SELECT eq.equipment_name AS equipmentName,
+               eq.equipment_no   AS equipmentNo,
+               eq.door_code      as doorCode,
+               eq.equipment_type AS deviceType,
+               tim.stop_time     AS stopTime,
+               tim.reset_time    AS resetTime,
+               tim.work_state    AS workState,
+               tim.duration,
+               tim.group_id      as groupId
+        FROM dz_equipment AS eq
+                     LEFT JOIN dz_equipment_time_analysis AS tim ON eq.id = tim.device_id
+        WHERE eq.is_show = 1
+          AND tim.device_id = #{deviceId}
+          AND tim.order_no = #{orderNo}
+          AND tim.stop_time &gt;= #{stopTime}
+    </select>
+
+    <select id="getUpdateTimeDesc" resultType="java.util.Date">
+        SELECT update_time
+        FROM dz_equipment_time_analysis
+        ORDER BY update_time DESC LIMIT 1;
+    </select>
+
+    <select id="getResetTimeIsNull" resultMap="BaseResultMap">
+        SELECT device_id,
+               order_no,
+               line_no,
+               equipment_no,
+               equipment_type
+        FROM dz_equipment_time_analysis
+        WHERE reset_time IS NULL
+          AND equipment_no = #{shardingParameter,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getEquipmentSumRunTime" resultType="java.math.BigDecimal">
+        SELECT
+            IFNULL(SUM(duration), 0) AS duration
+        FROM dz_equipment_time_analysis
+        WHERE order_no = #{orderNo,jdbcType=VARCHAR}
+          AND device_id = #{deviceId,jdbcType=VARCHAR}
+          AND work_state = 1
+          AND stop_data = #{workData}
+          AND stop_day_Time >= #{startTime,jdbcType=TIME}
+    </select>
+
+    <select id="getDeviceAnalysisTime" resultType="com.dzics.data.pdm.model.vo.DeviceStateDetails">
+        SELECT
+               tim.stop_time     AS stopTime,
+               tim.reset_time    AS resetTime,
+               tim.work_state    AS workState,
+               tim.duration,
+               tim.group_id      as groupId
+        FROM dz_equipment_time_analysis AS tim
+        WHERE tim.device_id = #{deviceId}
+          AND tim.order_no = #{orderNo}
+          AND tim.stop_time &gt;= #{stopTime}
+    </select>
+</mapper>

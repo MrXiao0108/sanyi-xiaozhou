@@ -1,0 +1,164 @@
+// 版本号
+syntax = "proto3";
+package deivceStateProto;
+// 打包路径
+option java_package = "com.dzics.data.kanban.changsha.xiaozhou.jingjia.model.proto";
+// Java文件名
+option java_outer_classname = "XiaoZhouJingKanBanProtobuf";
+/**
+  更新刀具信息
+ */
+message InitToolData{
+  repeated ToolData toolData = 1;
+  string type = 2;
+}
+
+message UpdateToolData{
+  ToolData toolData = 1;
+  string type = 2;
+}
+
+message ToolData{
+  string orderNo = 1;
+  string lineNo = 2;
+  string equipmentId = 3;
+  string equipmentName = 4;
+  string equipmentNo = 5;
+  repeated ToolDataDo toolDataList = 6;
+}
+message ToolDataDo {
+  string  toolNo = 1;
+  int32 toolLifeCounter = 2;
+  int32 toolLife = 3;
+}
+/**
+  实时日志
+ */
+message InitRealTimeLogRes{
+  string type = 1;
+  repeated RealTimeLogRes data = 2;
+}
+message RealTimeLogRes{
+  /**
+   * 时间
+   */
+  string realTime = 1;
+  /**
+   * 日志信息
+   */
+  string message = 2;
+  /**
+   * 日志消息生产客户端
+   */
+  string clientId = 3;
+}
+
+/**
+ 设备状态
+ */
+message InitDeviceState{
+  string type = 1;
+  repeated MachiningMessageStatus status = 2;
+}
+message MachiningMessageStatus{
+  //  设备ID
+  string equimentId = 1;
+  //  设备序号
+  string equipmentNo = 2;
+  // 设备类型
+  int32 equipmentType = 3;
+
+  string x = 4;
+  string y = 5;
+  string z = 6;
+  //  连接状态
+  string connectState = 7;
+  //  操作模式
+  string operatorMode = 8;
+  //  运行状态
+  string runStatus = 9;
+  //  速度倍率
+  string speedRatio = 10;
+  //  加工节拍
+  string machiningTime = 11;
+  //  告警状态
+  string alarmStatus = 12;
+  //  设备名称
+  string equipmentName = 13;
+  /**
+  * 进给速度
+  */
+  string feedSpeed = 14;
+  /**
+   * 主轴转速
+   */
+  string speedOfMainShaft = 15;
+  string  j1 = 16;
+  string  j2 = 17;
+  string  j3 = 18;
+  string  j4 = 19;
+  string  j5 = 20;
+  string  j6 = 21;
+  //主轴负载
+  string spindleLoad = 22;
+
+}
+
+/**
+检测数据
+ */
+message CheckProductBase{
+
+  string type = 1;
+
+  ProDetectionAnren data = 2;
+
+}
+message ProDetectionAnren{
+
+  repeated  TableData tableData = 1;
+
+  repeated  TableColumn tableColumn = 2;
+}
+message TableColumn{
+  string colData = 1;
+  string colName = 2;
+  int32 exhibition = 3;
+}
+
+message TableData{
+  string detect01 = 1;
+  string detect02 = 2;
+  string detect03 = 3;
+  string detect04 = 4;
+  string detect05 = 5;
+  string detect06 = 6;
+  string detect07 = 7;
+  string detect08 = 8;
+  string detect09 = 9;
+  string detect10 = 10;
+  string detect11 = 11;
+  string detect12 = 12;
+  string detect13 = 13;
+  string detect14 = 14;
+  string detect15 = 15;
+  string detect16 = 16;
+  string detect17 = 17;
+  string detect18 = 18;
+  string detect19 = 19;
+  string detect20 = 21;
+  string detect21 = 22;
+  string detect22 = 23;
+  string detect23 = 24;
+  string detect24 = 25;
+  string detect25 = 26;
+  string detect26 = 27;
+  string detect27 = 28;
+  string detect28 = 29;
+  string detectorTime = 30;
+  string name = 31;
+  string onlyKey = 32;
+  string outOk = 33;
+  string producBarcode = 34;
+  string productNo = 35;
+}

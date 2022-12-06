@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.appoint.changsha.mom.db.dao.MomOrderPathDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.appoint.changsha.mom.model.entity.MomOrderPath">
+        <id column="working_procedure_id" property="workingProcedureId" />
+        <result column="mom_order_id" property="momOrderId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        working_procedure_id, mom_order_id, OprSequenceNo, SequenceNo, OprSequenceName, OprSequenceType, ScheduledStartDate, ScheduledCompleteDate, WorkCenter, WorkCenterName, WorkStation, WorkStationName, ProgressStatus, Quantity
+    </sql>
+
+    <select id="getNewByMomOrder" resultType="com.dzics.data.appoint.changsha.mom.model.entity.MomOrderPath">
+        SELECT
+            path.*
+        FROM
+            mom_order AS od
+                LEFT JOIN mom_order_path AS path ON od.pro_task_order_id = path.mom_order_id
+        WHERE
+            od.order_id = #{orderId}
+            AND od.paramRsrv2 is NULL
+        ORDER BY
+            od.create_time DESC
+            LIMIT 1
+    </select>
+
+    <select id="getIsRunning" resultType="java.lang.Integer">
+    SELECT
+        COUNT(*) as `count`
+    FROM
+        mom_order AS od
+        LEFT JOIN mom_order_path AS ph ON od.pro_task_order_id = ph.mom_order_id
+    WHERE
+        1 = 1
+      AND od.line_id = #{lineId}
+      AND ( od.order_operation_result = 1 OR od.ProgressStatus = 120 OR od.ProgressStatus = 160)
+      AND ph.WorkStation in
+        <foreach collection="stations" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+
+</mapper>

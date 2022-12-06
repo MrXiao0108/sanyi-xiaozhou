@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.pdm.db.dao.DzLineShiftDayDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.pdm.model.entity.DzLineShiftDay">
+        <id column="id" property="id"/>
+        <result column="line_id" property="lineId"/>
+        <result column="line_no" property="lineNo"/>
+        <result column="eq_id" property="eqId"/>
+        <result column="equipment_no" property="equipmentNo"/>
+        <result column="work_name" property="workName"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, line_id, line_no, eq_id, equipment_no, work_name, start_time, end_time, org_code, del_flag, create_by, create_time, update_by, update_time
+    </sql>
+    <select id="getBc" resultType="com.dzics.data.pdm.model.entity.DzLineShiftDay">
+        SELECT
+        eq.id AS eqId,
+        eq.equipment_no AS equipmentNo,
+        eq.equipment_type AS equipmentType,
+        eq.org_code as orgCode,
+        eq.order_no as orderNo,
+        lin.id AS lineId,
+        lin.line_no AS lineNo,
+        shit.work_name AS workName,
+        shit.start_time AS startTime,
+        shit.end_time AS endTime,
+        shit.sort_no as sortNo
+        FROM
+        dz_equipment AS eq
+        LEFT JOIN dz_production_line AS lin ON eq.line_id = lin.id
+        LEFT JOIN dz_equipment_work_shift AS shit ON shit.production_line_id = lin.id
+        WHERE
+        eq.id
+        IN
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND eq.del_flag = 0
+        AND shit.del_flag = 0
+    </select>
+    <select id="getNotPb" resultType="java.lang.Long">
+        SELECT
+            eq.id
+        FROM
+            dz_equipment AS eq
+        LEFT JOIN dz_line_shift_day AS shday ON eq.id = shday.eq_id
+        AND shday.work_data = #{now}
+        WHERE
+            eq.del_flag = 0
+        AND shday.work_data IS NULL;
+    </select>
+
+
+    <select id="getDayReportFormTaskSignal" resultType="com.dzics.data.pdm.model.dto.DayReportForm">
+        SELECT
+                proLine.line_name AS lineName,
+                equ.org_code AS orgCode,
+                equ.equipment_type AS equipmentType,
+                equ.equipment_no AS equipmentCode,
+                equ.equipment_name AS equipmentName,
+                linDay.work_name AS workName,
+                linDay.start_time AS startTime,
+                linDay.end_time AS endTime,
+                linDay.work_data AS workData,
+                linDay.eq_id AS equimentId,
+                linDay.line_id AS lineId,
+                linDay.line_no AS lineNo,
+                linDay.order_no AS orderNo,
+                linDay.id as dayId
+        FROM
+                dz_line_shift_day AS linDay
+                        LEFT JOIN dz_equipment AS equ ON linDay.eq_id = equ.id
+                        LEFT JOIN dz_production_line AS proLine ON linDay.line_id = proLine.id
+        WHERE
+                linDay.work_data = #{now}
+        GROUP BY
+                linDay.id
+    </select>
+
+    <select id="getWorkDate" resultType="com.dzics.data.pdm.model.dto.DayReportForm">
+        SELECT
+        work_name AS workName,
+        start_time AS startTime,
+        end_time AS endTime,
+        work_data AS workData,
+        eq_id AS equimentId,
+        line_id AS lineId,
+        line_no AS lineNo,
+        order_no AS orderNo
+        FROM
+        dz_line_shift_day
+        WHERE
+        work_data = #{now}
+    </select>
+
+    <select id="getRobotDownExcel" resultType="com.dzics.data.pdm.model.vo.RobotDownExcelVo">
+        SELECT
+        eq.order_no AS orderNo,
+        line.line_name AS lineName,
+        eq.equipment_no AS equipmentNo,
+        eq.equipment_code AS equipmentCode,
+        eq.equipment_name AS equipmentName,
+        eq.down_time AS downTime,
+        eq.down_sum AS downSum
+        FROM
+        dz_equipment AS eq
+        LEFT JOIN dz_production_line AS line ON eq.line_id = line.id
+        LEFT JOIN dz_order as od on od.id=line.order_id
+        WHERE 1=1 and  eq.equipment_type=3
+        <if test="departId != null and departId != '' ">
+            AND od.depart_id=#{departId}
+        </if>
+        <if test="orgCode != null and orgCode != '' ">
+            AND eq.org_code=#{orgCode}
+        </if>
+        <if test="orderNo != null and orderNo != '' ">
+            AND eq.order_no=#{orderNo}
+        </if>
+        <if test="lineNo != null and lineNo != '' ">
+            AND line.line_no=#{lineNo}
+        </if>
+        <if test="equipmentNo != null and equipmentNo != ''">
+            AND eq.equipment_code=#{equipmentNo}
+        </if>
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+
+
+    <select id="getMachineDownExcel" resultType="com.dzics.data.pdm.model.vo.MachineDownExcelVo">
+        SELECT
+            eq.order_no AS orderNo,
+            line.line_name AS lineName,
+            eq.equipment_no AS equipmentNo,
+            eq.equipment_code AS equipmentCode,
+            eq.equipment_name AS equipmentName,
+            eq.down_time AS downTime,
+            eq.down_sum AS downSum
+        FROM
+            dz_equipment AS eq
+                LEFT JOIN dz_production_line AS line ON eq.line_id = line.id
+                LEFT JOIN dz_order as od on od.id=line.order_id
+        WHERE 1=1 and eq.equipment_type=2
+          <if test="departId != null and departId != '' ">
+              AND od.depart_id=#{departId}
+          </if>
+          <if test="orgCode != null and orgCode != '' ">
+              AND eq.org_code=#{orgCode}
+          </if>
+          <if test="orderNo != null and orderNo != '' ">
+              AND eq.order_no=#{orderNo}
+          </if>
+          <if test="lineNo != null and lineNo != '' ">
+              AND line.line_no=#{lineNo}
+          </if>
+          <if test="equipmentNo != null and equipmentNo != ''">
+              AND eq.equipment_code=#{equipmentNo}
+          </if>
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+
+
+</mapper>

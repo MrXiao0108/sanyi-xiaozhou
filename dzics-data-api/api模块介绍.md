@@ -1,0 +1,13 @@
+- ## **dzdc 顶级模块管理POM**
+  
+   - ### **dzics-data-api   业务API抽象层POM**
+     - #### dzics-data-boardms-api           看板路由管理接口api
+     - #### dzics-data-fms-api               文件管理接口api
+     - #### dzics-data-logms-api             日志管理接口api
+     - #### dzics-data-pdm-api               生产数据接口api
+     - #### dzics-data-pms-api               产品管理接口api
+     - #### dzics-data-pub-api               公共服务接口api
+     - #### dzics-data-rabbitmq-api          消息发送接口api
+     - #### dzics-data-tool-api              刀具数据接口API
+     - #### dzics-data-ums-api               用户服务接口api
+     - #### dzics-data-zkjob-api             任务运行记录接口API

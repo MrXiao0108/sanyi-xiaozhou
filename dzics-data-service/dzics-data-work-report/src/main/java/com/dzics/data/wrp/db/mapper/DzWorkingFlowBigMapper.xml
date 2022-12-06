@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.wrp.db.dao.DzWorkingFlowBigDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.wrp.model.entity.DzWorkingFlowBig">
+        <id column="process_flow_big_id" property="processFlowBigId" />
+        <result column="qr_code" property="qrCode" />
+        <result column="work_time" property="workTime" />
+        <result column="work_date" property="workDate" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        process_flow_big_id, qr_code, , work_time, work_date, create_time
+    </sql>
+
+</mapper>

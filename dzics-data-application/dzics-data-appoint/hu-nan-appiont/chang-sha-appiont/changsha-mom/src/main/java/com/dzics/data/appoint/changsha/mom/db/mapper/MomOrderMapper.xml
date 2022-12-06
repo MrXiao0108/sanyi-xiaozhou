@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.appoint.changsha.mom.db.dao.MomOrderDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.appoint.changsha.mom.model.entity.MomOrder">
+        <id column="pro_task_order_id" property="proTaskOrderId"/>
+        <result column="taskType" property="tasktype"/>
+        <result column="taskId" property="taskid"/>
+        <result column="version" property="version"/>
+        <result column="WipOrderNo" property="wiporderno"/>
+        <result column="ProductNo" property="productNo"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="order_operation_result" property="orderOperationResult"/>
+        <result column="order_output" property="orderOutput"/>
+        <result column="order_old_state" property="orderOldState"/>
+        <result column="line_id" property="lineId"/>
+
+
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        pro_task_order_id, taskType, taskId, version, WipOrderNo, ProductNo, JsonOriginalData, org_code, del_flag,
+        create_by, create_time, update_by, update_time,order_operation_result,order_output,order_old_state,line_id
+    </sql>
+    <update id="updateOrderState">
+        UPDATE mom_order SET ProgressStatus = "120" WHERE WipOrderNo = #{wiporderno};
+    </update>
+
+    <select id="getOrders" resultType="com.dzics.data.appoint.changsha.mom.model.dao.MomOrderDo">
+        SELECT
+        mo.pro_task_order_id as proTaskOrderId,
+        mo.line_id as lineId,
+        mo.order_id as orderId,
+        mo.WipOrderNo as wiporderno,
+        mo.WipOrderType as wipOrderType,
+        mo.ProductNo as productNo,
+        mo.Quantity as quantity,
+        mo.ScheduledStartDate as scheduledStartDate,
+        mo.ScheduledCompleteDate as scheduledCompleteDate,
+        mo.reality_start_date as realityStartDate,
+        mo.reality_complete_date as realityCompleteDate,
+        mo.ProgressStatus as progressStatus,
+        mo.ok_num as qualified,
+        mo.ng_num as unqualified,
+        mo.order_output as actualProduction,
+        pa.OprSequenceNo AS oprSequenceNo,
+        pa.OprSequenceName AS oprSequenceName,
+        pa.SequenceNo AS sequenceNo
+        FROM
+        mom_order AS mo
+        LEFT JOIN mom_order_path AS pa ON mo.WipOrderNo = pa.WipOrderNo
+        WHERE
+        1 = 1
+        <if test="lineId != null and lineId !='' ">
+            AND mo.line_id = #{lineId,jdbcType=VARCHAR}
+        </if>
+        <if test="wipOrderNo != null and wipOrderNo !='' ">
+            AND mo.WipOrderNo = #{wipOrderNo,jdbcType=VARCHAR}
+        </if>
+        <if test="wipOrderType != null and wipOrderType !='' ">
+            AND mo.WipOrderType = #{wipOrderType,jdbcType=VARCHAR}
+        </if>
+        <if test="progressStatus != null and progressStatus !='' ">
+            AND mo.ProgressStatus = #{progressStatus,jdbcType=VARCHAR}
+        </if>
+        <if test="productNo != null and productNo !='' ">
+            AND mo.ProductNo= #{productNo,jdbcType=VARCHAR}
+        </if>
+        <if test="startTime != null and startTime !='' ">
+            AND mo.ScheduledStartDate &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != '' ">
+            AND mo.ScheduledStartDate &lt;= #{endTime}
+        </if>
+        <if test="type != null and type!=''">
+            ORDER BY mo.${field} ${type}
+        </if>
+    </select>
+
+    <select id="getUncompletedOrder" resultType="com.dzics.data.appoint.changsha.mom.model.entity.MomOrder">
+        SELECT
+        *
+        FROM
+        mom_order
+        WHERE
+        ProgressStatus = '110'
+        ORDER BY
+        ScheduledStartDate
+        LIMIT 1;
+    </select>
+    <select id="getWorkingOrder" resultType="com.dzics.data.appoint.changsha.mom.model.entity.MomOrder">
+        SELECT
+            *
+        FROM
+            mom_order AS od
+        LEFT JOIN mom_order_path AS ph ON ph.mom_order_id = od.pro_task_order_id
+        WHERE
+            od.order_id = #{orderId}
+          AND od.line_id = #{lineId}
+          AND od.order_operation_result = 1
+          AND ph.WorkStation = #{workStation}
+    </select>
+    <select id="getOrderCallMaterialStatus" resultType="com.dzics.data.appoint.changsha.mom.model.entity.MomOrder">
+        SELECT
+            *
+        FROM
+            `mom_order`
+        WHERE
+            order_id = #{orderId}
+          AND line_id = #{lineId}
+          AND ProgressStatus = #{down}
+          AND ProductNo = #{productNo}
+          AND order_operation_result = 2
+        ORDER BY
+            ScheduledStartDate ASC
+            LIMIT 1
+    </select>
+</mapper>

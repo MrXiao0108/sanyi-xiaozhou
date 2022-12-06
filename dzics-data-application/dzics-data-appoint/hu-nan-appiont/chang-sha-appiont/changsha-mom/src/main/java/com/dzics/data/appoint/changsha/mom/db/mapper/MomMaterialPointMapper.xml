@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.appoint.changsha.mom.db.dao.MomMaterialPointDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.appoint.changsha.mom.model.entity.MomMaterialPoint">
+        <result column="material_point_id" property="materialPointId"/>
+        <result column="in_island_code" property="inIslandCode"/>
+        <result column="external_code" property="externalCode"/>
+        <result column="line_id" property="lineId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="line_no" property="lineNo"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="pallet_type" property="palletType"/>
+        <result column="remarks_text" property="remarksText"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="station_id" property="stationId"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="getStationCode" resultType="com.dzics.data.appoint.changsha.mom.model.dto.MomUpPoint">
+        SELECT
+        station_id AS stationCode,
+        external_code AS externalCode,
+        point_model as pointModel,
+        pallet_type as palletType
+        FROM
+        `mom_material_point`
+        WHERE
+        order_no = #{orderCode}
+        AND line_no = #{lineNo}
+        AND in_island_code = #{basketType}
+    </select>
+
+    <select id="getAllPoints" resultType="com.dzics.data.appoint.changsha.mom.model.dao.MomMaterialPointDo">
+        SELECT
+        materialPointId,
+        orderId,
+        lineId,
+        orderNo,
+        lineNo,
+        externalCode,
+        externalRegion,
+        lineNode,
+        inIslandCode,
+        stationId,
+        pointModel,
+        nextPoint,
+        dzStationCode
+        FROM
+        (
+        SELECT
+        material_point_id AS materialPointId,
+        pl.id as lineId,
+        pl.line_name AS lineName,
+        mp.external_code AS externalCode,
+        mp.external_region AS externalRegion,
+        mp.line_node AS lineNode,
+        mp.in_island_code AS inIslandCode,
+        mp.station_id AS stationId,
+        mp.point_model as pointModel,
+        mp.next_point as nextPoint,
+        mp.dz_station_code as dzStationCode
+        FROM
+        mom_material_point AS mp
+        LEFT JOIN dz_production_line AS pl ON pl.id = mp.line_id
+        WHERE
+        1 = 1
+        <if test="lineId!= null and lineId!= ''">
+            and mp.id = #{lineId}
+        </if>
+        <if test="externalCode !=null and externalCode!=''">
+            and mp.external_code = #{externalCode}
+        </if>
+        ) AS temp
+    </select>
+
+</mapper>

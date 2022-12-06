@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzics.data.tool.db.dao.DzToolGroupsDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dzics.data.tool.model.entity.DzToolGroups">
+        <id column="tool_groups_id" property="toolGroupsId"/>
+        <result column="group_no" property="groupNo"/>
+        <result column="org_code" property="orgCode"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        tool_groups_id, group_no, org_code, create_by, create_time, update_by, update_time
+    </sql>
+    <select id="getToolGroupsList" resultType="com.dzics.data.tool.model.entity.DzToolGroups">
+        select
+        gro.tool_groups_id as toolGroupsId,
+        gro.group_no as groupNo,
+        gro.create_time as createTime,
+        (select COUNT(tool.id) from dz_tool_info tool where tool.tool_groups_id=gro.tool_groups_id) as toolSum
+        from dz_tool_groups as gro
+        where
+        gro.org_code = #{useOrgCode}
+        <if test="groupNo!=null and groupNo!=''">
+            and gro.group_no=#{groupNo}
+        </if>
+        <if test="type != null and type != '' ">
+            ORDER BY
+            ${field} ${type}
+        </if>
+    </select>
+    <select id="getToolGroupsList_COUNT" resultType="long">
+        select
+        count(0)
+        from dz_tool_groups gro
+        where 1=1
+        <if test="groupNo!=null and groupNo!=''">
+            and gro.group_no=#{groupNo}
+        </if>
+    </select>
+</mapper>

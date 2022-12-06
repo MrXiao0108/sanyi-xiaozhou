@@ -1,0 +1,59 @@
+// 版本号
+syntax = "proto3";
+package deivceStateProto;
+// 打包路径
+option java_package = "com.dzics.data.kanban.changsha.shuixiang.model.proto";
+// Java文件名
+option java_outer_classname = "ShuiXiangKanBanProtobuf";
+/**
+  实时日志
+ */
+message InitRealTimeLogRes{
+  string type = 1;
+  repeated RealTimeLogRes data = 2;
+}
+message RealTimeLogRes{
+  /**
+   * 时间
+   */
+  string realTime = 1;
+  /**
+   * 日志信息
+   */
+  string message = 2;
+  /**
+   * 日志消息生产客户端
+   */
+  string clientId = 3;
+}
+
+/**
+ 设备状态
+ */
+message InitDeviceState{
+  string type = 1;
+  repeated MachiningMessageStatus status = 2;
+}
+message MachiningMessageStatus{
+//  设备ID
+  string equimentId = 1;
+//  设备序号
+  string equipmentNo = 2;
+// 设备类型
+  int32 equipmentType = 3;
+  string x = 4;
+  string y = 5;
+  string z = 6;
+//  连接状态
+  string connectState = 7;
+//  操作模式
+  string operatorMode = 8;
+//  运行状态
+  string runStatus = 9;
+//  速度倍率
+  string speedRatio = 10;
+//  加工节拍
+  string machiningTime = 11;
+//  告警状态
+  string alarmStatus = 12;
+}
