@@ -29,15 +29,16 @@ public class AccToolServiceImpl implements AccToolService {
 
     @Override
     public GetToolInfoDataDo getEqToolInfoList(RabbitmqMessage rabbitmqMessage) {
+        String msg = rabbitmqMessage.getMessage();
+        if (msg == null) {
+            return null;
+        }
         String timestamp = rabbitmqMessage.getTimestamp();
         String orderNumber = rabbitmqMessage.getOrderCode();
         String lineNum = rabbitmqMessage.getLineNo();
         String deviceNum = rabbitmqMessage.getDeviceCode();
         String deviceTypeStr = rabbitmqMessage.getDeviceType();
-        String msg = rabbitmqMessage.getMessage();
-        if (msg == null) {
-            return null;
-        }
+
         //查询设备
         DzEquipment upDzDqState = dzEquipmentService.getTypeLingEqNo(deviceNum, lineNum, deviceTypeStr, orderNumber);
         if (ObjectUtils.isEmpty(upDzDqState)) {
@@ -55,10 +56,14 @@ public class AccToolServiceImpl implements AccToolService {
                 String cmd = split[0];//B803 或  B804
                 String cmdValue = split[1];
                 String replace = cmdValue.replace("[", "");
-                String[] valueList = replace.split("]");//得到的指令值
-                if (EqMentStatus.CMD_CUTTING_TOOL_FILE.equals(cmd)) {//刀具寿命
+                //得到的指令值
+                String[] valueList = replace.split("]");
+                //刀具寿命
+                if (EqMentStatus.CMD_CUTTING_TOOL_FILE.equals(cmd)) {
                     data = getLife(id, valueList);
-                } else if (EqMentStatus.CMD_CUTTING_TOOL_INFO.equals(cmd)) {//刀具信息
+                }
+                //刀具信息
+                if (EqMentStatus.CMD_CUTTING_TOOL_INFO.equals(cmd)) {
                     data = getGeometry(id, valueList);
                 }
                 if (data != null && data.size() > 0) {
@@ -89,7 +94,8 @@ public class AccToolServiceImpl implements AccToolService {
         List<DzToolCompensationData> list = redisToolInfoListService.getCompensationDataList(eqId);
         for (String str : strList) {
             String[] strings = str.split(",");
-            Integer toolNo = Integer.valueOf(strings[0]);//刀具号
+            //刀具号
+            Integer toolNo = Integer.valueOf(strings[0]);
             for (DzToolCompensationData data : list) {
                 //寻找刀具 刀组和设备一样的记录
                 if (data.getToolNo().intValue() == toolNo.intValue()) {

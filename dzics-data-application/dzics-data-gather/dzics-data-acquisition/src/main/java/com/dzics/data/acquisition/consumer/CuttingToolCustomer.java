@@ -29,7 +29,7 @@ import org.springframework.util.ObjectUtils;
  */
 @Component
 @Slf4j
-public class CuttingToolCusomer {
+public class CuttingToolCustomer {
 
     @Autowired
     private AccToolService accqAnalysisStateService;
@@ -64,7 +64,7 @@ public class CuttingToolCusomer {
      */
     @RabbitListener(queues = "${accq.cutting.tool.detection}")
     public void cuttingToolDetection(@Payload String msg, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag, Channel channel) throws Throwable {
-        log.debug("CuttingToolCusomer [cuttingToolDetection] 消息:{}", msg);
+        log.debug("CuttingToolCustomer [cuttingToolDetection] 消息:{}", msg);
         RLock lock = redissonClient.getLock(RedisLockKey.DZ_LOCK_DATA_10);
         try {
             lock.lock();

@@ -55,7 +55,7 @@ public class DzicsMaintenancePatrolServiceImpl extends ServiceImpl<DzicsMaintena
             dzicsMaintenancePatrol.setNextExecuteData(simpleDateFormat.format(calendar.getTime()));
         }
         dzicsMaintenancePatrol.setExecuteData(simpleDateFormat.format(new Date()));
-        dzicsMaintenancePatrol.setIsShow(1);
+        dzicsMaintenancePatrol.setIsShow(0);
         dzicsMaintenancePatrol.setMessage(addMainTenPatrolVo.getMessage());
         dzicsMaintenancePatrol.setCreateTime(date);
         boolean save = this.save(dzicsMaintenancePatrol);
@@ -139,6 +139,7 @@ public class DzicsMaintenancePatrolServiceImpl extends ServiceImpl<DzicsMaintena
         calendar.add(Calendar.DATE,+Integer.valueOf(patrol.getIntervalTime()));
         patrol.setNextExecuteData(simpleDateFormat.format(calendar.getTime()));
         patrol.setUpdateTime(new Date());
+        patrol.setIsShow(1);
         boolean b = this.updateById(patrol);
         if(b==true){
             return Result.ok();

@@ -1,8 +1,11 @@
 package com.dzics.data.business.controller.index;
 
+import com.dzics.data.business.model.vo.ActiveTip.ActiveTipsVo;
+import com.dzics.data.business.service.ActiveTipsService;
 import com.dzics.data.business.service.EquipmentProNumService;
 import com.dzics.data.business.service.EquipmentService;
 import com.dzics.data.business.service.LogService;
+import com.dzics.data.common.base.exception.enums.CustomExceptionType;
 import com.dzics.data.common.base.model.dao.QualifiedAndOutputDo;
 import com.dzics.data.common.base.vo.Result;
 import com.dzics.data.logms.model.entity.SysRealTimeLogs;
@@ -36,6 +39,8 @@ public class IndexSocketAddressController {
    private EquipmentService equipmentService;
    @Autowired
    private LogService logService;
+   @Autowired
+   private ActiveTipsService activeTipsService;
 
    @ApiOperation(value = "首页查询产出率和合格率")
    @ApiOperationSupport(author = "jq", order = 1)
@@ -73,5 +78,12 @@ public class IndexSocketAddressController {
                                                         @RequestHeader(value = "sub", required = false) @ApiParam(value = "用户账号") String sub,
                                                         @PathVariable("orderId")String orderId) {
       return Result.ok(logService.getIndexWarnLog(orderId));
+   }
+
+   @ApiOperation(value = "业务端到期消息推送")
+   @GetMapping("/getActiveTipsVo")
+   public Result<List<ActiveTipsVo>> getActiveTipsVo(@RequestHeader(value = "jwt_token", required = false) @ApiParam(value = "token令牌") String tokenHdaer,
+                                               @RequestHeader(value = "sub", required = false) @ApiParam(value = "用户账号") String sub) {
+      return new Result(CustomExceptionType.OK, activeTipsService.getActiveTipsVo(), activeTipsService.getActiveTipsVo().size());
    }
 }

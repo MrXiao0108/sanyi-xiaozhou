@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -250,6 +251,7 @@ public class LogServiceImpl implements LogService {
             String AlarmMsg = details[5];
             timeLogs.setMessage("报警代码："+AlarmNo+",报警内容："+AlarmMsg+",报警时间："+Datetime);
         }
+        list.sort(Comparator.comparing(SysRealTimeLogs::getTimestampTime).reversed());
         return list;
     }
 
