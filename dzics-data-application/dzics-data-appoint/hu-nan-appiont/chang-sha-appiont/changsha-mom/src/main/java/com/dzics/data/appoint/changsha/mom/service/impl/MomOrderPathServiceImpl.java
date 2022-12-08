@@ -190,9 +190,7 @@ public class MomOrderPathServiceImpl extends ServiceImpl<MomOrderPathDao, MomOrd
     public Map<String, MomOrderPath> wipOrderNoMapByWipOrderNo(Collection<String> coll) {
         List<MomOrderPath> list = this.list(Wrappers.<MomOrderPath>lambdaQuery()
                 .in(MomOrderPath::getWipOrderNo, coll));
-        return list
-                .stream()
-                .collect(Collectors.toMap(MomOrderPath::getWipOrderNo, m -> m));
+        return list.stream().collect(Collectors.toMap(MomOrderPath::getWipOrderNo, m -> m));
     }
 
     @Override

@@ -3,8 +3,6 @@ package com.dzics.data.business.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.dzics.data.business.model.vo.ActiveTip.ActiveTipsVo;
 import com.dzics.data.business.service.ActiveTipsService;
-import com.dzics.data.maintain.model.entity.DzMaintainDevice;
-import com.dzics.data.maintain.service.DzMaintainDeviceService;
 import com.dzics.data.tool.model.entity.DzToolInfo;
 import com.dzics.data.tool.service.DzToolInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -27,11 +24,7 @@ import java.util.List;
 public class ActiveTipsServiceImpl implements ActiveTipsService {
 
     @Autowired
-    private DzMaintainDeviceService maintainDeviceService;
-
-    @Autowired
     private DzToolInfoService toolInfoService;
-
 
     @Override
     public List<ActiveTipsVo> getActiveTipsVo() {
@@ -49,20 +42,6 @@ public class ActiveTipsServiceImpl implements ActiveTipsService {
                 activeTipsVos.add(activeTipsVo);
             }
         }
-
-        //设备保养
-        List<DzMaintainDevice> dzMaintainDevices = maintainDeviceService.getBaseMapper().selectList(new QueryWrapper<DzMaintainDevice>().le("maintain_date_after", LocalDate.now()));
-        if(!CollectionUtils.isEmpty(dzMaintainDevices)){
-            for(DzMaintainDevice s : dzMaintainDevices){
-                ActiveTipsVo activeTipsVo = new ActiveTipsVo();
-                activeTipsVo.setId(s.getMaintainId());
-                activeTipsVo.setDataTime(simpleDateFormat.format(s.getUpdateTime()));
-                activeTipsVo.setMessage("有保养项到期，请及时处理");
-                activeTipsVo.setModelType("3");
-                activeTipsVos.add(activeTipsVo);
-            }
-        }
-
         //时间降序排序
         activeTipsVos.sort(Comparator.comparing(ActiveTipsVo::getDataTime).reversed());
         return activeTipsVos;

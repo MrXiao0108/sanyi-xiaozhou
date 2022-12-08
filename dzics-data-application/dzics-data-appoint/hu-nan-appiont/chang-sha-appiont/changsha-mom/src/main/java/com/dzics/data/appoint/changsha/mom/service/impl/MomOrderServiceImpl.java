@@ -403,7 +403,7 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
                 .stream()
                 .map(MomOrderDo::getWiporderno)
                 .collect(Collectors.toSet());
-        Map<String, MomOrderPath> wipOrderNoMap = momOrderPathService.wipOrderNoMapByWipOrderNo(wipOrderNoSet);
+//        Map<String, MomOrderPath> wipOrderNoMap = momOrderPathService.wipOrderNoMapByWipOrderNo(wipOrderNoSet);
         Map<String, String> map = momMaterialStorageService.wipOrderNoTotal(wipOrderNoSet);
 
         DzProductionLine lineId = cachingApi.getOrderIdAndLineId();

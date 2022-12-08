@@ -36,7 +36,7 @@ public class ActiveTipsServiceImpl implements ActiveTipsService {
                 ActiveTipsVo activeTipsVo = new ActiveTipsVo();
                 activeTipsVo.setId(patrol.getId());
                 //1：巡检    2：维修
-                if("1".equals(patrol.getType())){
+                if(1==patrol.getType()){
                     activeTipsVo.setMessage("有巡检项到期，请及时处理");
                     activeTipsVo.setModelType("4");
                 }else{

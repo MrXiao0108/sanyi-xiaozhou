@@ -17,6 +17,8 @@ import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -124,20 +126,18 @@ public class DzicsMaintenancePatrolServiceImpl extends ServiceImpl<DzicsMaintena
             throw new CustomException(CustomExceptionType.Parameter_Exception,CustomResponseCode.ERR11);
         }
         //校验是否到期
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        if(!patrol.getExecuteData().equals(simpleDateFormat.format(new Date()))){
-            throw new CustomException(CustomExceptionType.SYSTEM_ERROR,CustomResponseCode.ERR11);
+        if(LocalDate.parse(patrol.getExecuteData(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).compareTo(LocalDate.now())>0){
+            throw new CustomException(CustomExceptionType.SYSTEM_ERROR,CustomResponseCode.ERR0);
         }
-
         //设置新的处理日期
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.DATE,+Integer.valueOf(patrol.getIntervalTime()));
-        patrol.setExecuteData(simpleDateFormat.format(calendar.getTime()));
+        patrol.setExecuteData(new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime()));
         calendar.clear();
-        calendar.setTime(simpleDateFormat.parse(patrol.getExecuteData()));
+        calendar.setTime(new SimpleDateFormat("yyyy-MM-dd").parse(patrol.getExecuteData()));
         calendar.add(Calendar.DATE,+Integer.valueOf(patrol.getIntervalTime()));
-        patrol.setNextExecuteData(simpleDateFormat.format(calendar.getTime()));
+        patrol.setNextExecuteData(new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime()));
         patrol.setUpdateTime(new Date());
         patrol.setIsShow(1);
         boolean b = this.updateById(patrol);

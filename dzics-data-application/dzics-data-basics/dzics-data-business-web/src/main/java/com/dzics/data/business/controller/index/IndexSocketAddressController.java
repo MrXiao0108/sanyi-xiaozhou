@@ -83,7 +83,7 @@ public class IndexSocketAddressController {
    @ApiOperation(value = "业务端到期消息推送")
    @GetMapping("/getActiveTipsVo")
    public Result<List<ActiveTipsVo>> getActiveTipsVo(@RequestHeader(value = "jwt_token", required = false) @ApiParam(value = "token令牌") String tokenHdaer,
-                                               @RequestHeader(value = "sub", required = false) @ApiParam(value = "用户账号") String sub) {
+                                                      @RequestHeader(value = "sub", required = false) @ApiParam(value = "用户账号") String sub) {
       return new Result(CustomExceptionType.OK, activeTipsService.getActiveTipsVo(), activeTipsService.getActiveTipsVo().size());
    }
 }

@@ -148,11 +148,9 @@ public class SimpleChatServerHandler extends ChannelInboundHandlerAdapter {
                         log.info("响应的数据-->:{}", message);
                         return;
                     }
-                    List<MomQrCodeVo> list = null;
+                    List<MomQrCodeVo> list = new ArrayList<>();
                     if(redisUtil.hasKey(orderCode + type + point)){
                         list = redisUtil.lGet(orderCode + type + point,0,-1);
-                    }else{
-                        list = new ArrayList<>();
                     }
                     //如果是0，新增当前料框缓存信息
                     if(DzUdpType.err.equals(statue)){
