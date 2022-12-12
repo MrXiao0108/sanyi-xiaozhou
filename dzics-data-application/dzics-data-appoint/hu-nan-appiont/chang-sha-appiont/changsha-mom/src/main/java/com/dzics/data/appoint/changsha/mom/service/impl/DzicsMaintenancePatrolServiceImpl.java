@@ -47,7 +47,7 @@ public class DzicsMaintenancePatrolServiceImpl extends ServiceImpl<DzicsMaintena
         dzicsMaintenancePatrol.setOrderId(addMainTenPatrolVo.getOrderId());
         dzicsMaintenancePatrol.setOrderNo(addMainTenPatrolVo.getOrderNo());
         dzicsMaintenancePatrol.setType(Integer.valueOf(addMainTenPatrolVo.getType()));
-        if("0".equals(addMainTenPatrolVo.getIntervalTime())){
+        if("0".equals(addMainTenPatrolVo.getIntervalTime()) || addMainTenPatrolVo.getIntervalTime()==null){
             dzicsMaintenancePatrol.setIntervalTime(0);
         }else{
             dzicsMaintenancePatrol.setIntervalTime(addMainTenPatrolVo.getIntervalTime());
@@ -147,16 +147,4 @@ public class DzicsMaintenancePatrolServiceImpl extends ServiceImpl<DzicsMaintena
         return Result.error("确认失败");
     }
 
-    public static void main(String[] args) throws ParseException {
-        Date date = new Date();
-        String s1 = "2022-11-22";
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//        Date d1 = simpleDateFormat.parse(s1);
-        String s2 = simpleDateFormat.format(date);
-        if(s1.equals(s2)){
-            System.out.println(true);
-        }else{
-            System.out.println(false);
-        }
-    }
 }

@@ -365,8 +365,10 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         wp.eq("ProgressStatus", loading);
         List<MomOrder> list = list(wp);
         if (CollectionUtils.isNotEmpty(list)) {
-            if (list.size() > 1) {
-                log.error("订单:{},产线:{},状态: {} ,存在多条订单记录", orderId, lineId, loading);
+            if(MomConstant.ORDER_DZ_1972.equals(orderNo) || MomConstant.ORDER_DZ_1973.equals(orderNo) || MomConstant.ORDER_DZ_1976.equals(orderNo)){
+                if (list.size() > 1) {
+                    log.error("订单:{},产线:{},状态: {} ,存在多条订单记录", orderId, lineId, loading);
+                }
             }
             return list.get(0);
         }

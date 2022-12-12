@@ -21,6 +21,10 @@ import java.util.Map;
 @Configuration
 public class DirectRealTimeLogs {
 
+    @Value("${accq.realTime.equipment.exchange}")
+    private String directRealTimeEquipmentExchange;
+
+
     /**
      * 实时日志信息队列
      */
@@ -28,14 +32,15 @@ public class DirectRealTimeLogs {
     private String queueRealTimeEquipment;
     @Value("${accq.realTime.equipment.routing}")
     private String directRealTimeEquipmentRouting;
-    @Value("${accq.realTime.equipment.exchange}")
-    private String directRealTimeEquipmentExchange;
 
-
+    /**
+     * 实时日志信息 死信队列
+     */
     @Value("${accq.read.cmd.queue.equipment.realTime.dead}")
     private String queueRealTimeEquipmentDead;
     @Value("${accq.realTime.equipment.routing.dead}")
     private String directRealTimeEquipmentRoutingDead;
+
 
     @Bean("directExchangeBaseRealTime")
     DirectExchange directExchangeBaseRealTime() {

@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class RealTimeLogsCousomer {
+public class RealTimeLogsCustomer {
 
     @Value("${accq.read.cmd.queue.equipment.realTime}")
     private String queueRealTimeEquipment;

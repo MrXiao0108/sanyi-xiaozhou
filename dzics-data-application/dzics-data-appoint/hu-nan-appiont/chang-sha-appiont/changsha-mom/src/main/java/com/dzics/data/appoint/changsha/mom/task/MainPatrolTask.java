@@ -13,6 +13,7 @@ import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -32,15 +33,20 @@ public class MainPatrolTask {
     @PostConstruct
     @Scheduled(cron = "0 0/5 * * * ?")
     public void validStatus(){
-        List<DzicsMaintenancePatrol> patrols = patrolService.getBaseMapper().selectList(new QueryWrapper<>());
+        List<DzicsMaintenancePatrol> patrols = patrolService.getBaseMapper().selectList(new QueryWrapper<DzicsMaintenancePatrol>().eq("is_show",1));
         if(!CollectionUtils.isEmpty(patrols)){
             List<DzicsMaintenancePatrol>list=new ArrayList<>();
             for (DzicsMaintenancePatrol patrol : patrols) {
                 LocalDate date = LocalDate.parse(patrol.getExecuteData(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                 if(date.compareTo(LocalDate.now())<=0){
                     patrol.setIsShow(0);
+                    patrol.setUpdateTime(new Date());
                     list.add(patrol);
                 }
+            }
+            if(CollectionUtils.isEmpty(list)){
+
+                return;
             }
             patrolService.updateBatchById(list, list.size());
         }
