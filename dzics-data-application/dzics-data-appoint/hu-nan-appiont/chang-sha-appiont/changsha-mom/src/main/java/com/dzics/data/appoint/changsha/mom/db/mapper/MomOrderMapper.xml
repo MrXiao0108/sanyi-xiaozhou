@@ -55,7 +55,7 @@
         pa.SequenceNo AS sequenceNo
         FROM
         mom_order AS mo
-        LEFT JOIN mom_order_path AS pa ON mo.WipOrderNo = pa.WipOrderNo
+        LEFT JOIN mom_order_path AS pa ON mo.pro_task_order_id = pa.mom_order_id
         WHERE
         1 = 1
         <if test="lineId != null and lineId !='' ">
