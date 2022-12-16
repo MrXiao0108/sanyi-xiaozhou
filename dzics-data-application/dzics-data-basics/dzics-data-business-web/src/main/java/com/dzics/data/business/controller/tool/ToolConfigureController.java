@@ -142,8 +142,7 @@ public class ToolConfigureController {
     @GetMapping("/getToolInfoDataList")
     public Result<GetToolInfoDataListDo> getToolInfoDataList(@RequestHeader(value = "jwt_token", required = false) @ApiParam(value = "token令牌", required = true) String tokenHdaer,
                                                              @RequestHeader(value = "sub", required = false) @ApiParam(value = "用户账号", required = true) String sub,
-                                                             PageLimit pageLimit, GetToolInfoDataListVo getToolInfoDataListVo
-    ) {
+                                                             PageLimit pageLimit, GetToolInfoDataListVo getToolInfoDataListVo) {
         Result toolInfoDataList = toolService.getToolInfoDataList(sub, pageLimit, getToolInfoDataListVo);
         return toolInfoDataList;
     }

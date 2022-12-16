@@ -394,6 +394,8 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
 
     @Override
     public Result<List<MomOrderDo>> listQuery(SearchOrderParms parms) {
+        DzProductionLine line = cachingApi.getOrderIdAndLineId();
+        parms.setLineId(line.getId());
         PageHelper.startPage(parms.getPage(), parms.getLimit());
         List<MomOrderDo> orderDos = momOrderDao.getOrders(parms);
         PageInfo<MomOrderDo> info = new PageInfo<>(orderDos);
@@ -401,10 +403,7 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         if (CollectionUtils.isEmpty(list)) {
             return Result.ok();
         }
-        Set<String> wipOrderNoSet = list
-                .stream()
-                .map(MomOrderDo::getWiporderno)
-                .collect(Collectors.toSet());
+        Set<String> wipOrderNoSet = list.stream().map(MomOrderDo::getWiporderno).collect(Collectors.toSet());
 //        Map<String, MomOrderPath> wipOrderNoMap = momOrderPathService.wipOrderNoMapByWipOrderNo(wipOrderNoSet);
         Map<String, String> map = momMaterialStorageService.wipOrderNoTotal(wipOrderNoSet);
 
@@ -488,6 +487,11 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
     @Override
     public Result orderStart(PutMomOrder putMomOrder) {
         List<String>equipmentIds=new ArrayList<>();
+        MomOrder byId = orderService.getById(putMomOrder.getProTaskOrderId());
+        //根据订单号获取订单状态，判断状态码是否为进行中
+        if (StringUtils.isEmpty(putMomOrder.getProgressStatus())) {
+            throw new CustomException(CustomExceptionType.Parameter_Exception,CustomResponseCode.ERR12.getChinese());
+        }
         String runType = manageModeService.getByCode("3").getType();
         //手动必须选择一台设备
         if("1".equals(runType)){
@@ -504,15 +508,12 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
                 equipmentIds = putMomOrder.getEquipmentIds();
             }
         }
-        MomOrder byId = orderService.getById(putMomOrder.getProTaskOrderId());
-        //根据订单号获取订单状态，判断状态码是否为进行中
-        if (StringUtils.isEmpty(putMomOrder.getProgressStatus())) {
-            log.error("订单状态为空");
-            throw new CustomException(CustomExceptionType.Parameter_Exception,CustomResponseCode.ERR12.getChinese());
-        }
         String type = "";
         if(MomConstant.ORDER_DZ_1974.equals(orderNo) || MomConstant.ORDER_DZ_1975.equals(orderNo)){
-            type = vaildOrder(putMomOrder);
+            type = validOrder(putMomOrder,byId);
+            if(!type.equals("A") || !type.equals("B")){
+                throw new CustomException(CustomExceptionType.Parameter_Exception,type);
+            }
         }else{
             //判断有没有操作在进行中
             QueryWrapper<MomOrder> wp = new QueryWrapper<>();
@@ -561,7 +562,10 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         }
         String type = "";
         if(MomConstant.ORDER_DZ_1974.equals(orderNo) || MomConstant.ORDER_DZ_1975.equals(orderNo)){
-            type = vaildOrder(putMomOrder);
+            type = validOrder(putMomOrder,monOrder);
+            if(!type.equals("A") || !type.equals("B")){
+                throw new CustomException(CustomExceptionType.Parameter_Exception,type);
+            }
         }
         //暂停订单
         MomOrder monOrder1 = new MomOrder();
@@ -603,7 +607,10 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         }
         String type = "";
         if(MomConstant.ORDER_DZ_1974.equals(orderNo) || MomConstant.ORDER_DZ_1975.equals(orderNo)){
-            type = vaildOrder(putMomOrder);
+            type = validOrder(putMomOrder,byId);
+            if(!type.equals("A") || !type.equals("B")){
+                throw new CustomException(CustomExceptionType.Parameter_Exception,type);
+            }
         }
         //强制关闭指定订单
         MomOrder monOrder = new MomOrder();
@@ -644,7 +651,10 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         }
         String type = "";
         if(MomConstant.ORDER_DZ_1974.equals(orderNo) || MomConstant.ORDER_DZ_1975.equals(orderNo)){
-            type = vaildOrder(putMomOrder);
+            type = validOrder(putMomOrder,monOrder);
+            if(!type.equals("A") || !type.equals("B")){
+                throw new CustomException(CustomExceptionType.Parameter_Exception,type);
+            }
         }else{
             //判断有没有操作在进行中
             QueryWrapper<MomOrder> wp = new QueryWrapper<>();
@@ -952,12 +962,13 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         return baseMapper.getWorkingOrder(orderId, lineId, workStation);
     }
 
-    public String vaildOrder(PutMomOrder putMomOrder){
+    public String validOrder(PutMomOrder putMomOrder,MomOrder oldOrder){
+        String msg = "";
         //获取当前订单下发的工序信息
         List<MomOrderPath> orderPaths = momOrderPathService.list(new QueryWrapper<MomOrderPath>().eq("mom_order_id", putMomOrder.getProTaskOrderId()).isNotNull("WorkStation"));
         if(CollectionUtils.isEmpty(orderPaths)){
-            log.error("MomOrderServiceImpl [orderRecover] 恢复订单失败，订单ID：{},Mom没有下发工序报文信息",putMomOrder.getProTaskOrderId());
-            throw new CustomException(CustomExceptionType.OK_NO_DATA,CustomResponseCode.ERR49.getChinese());
+            msg = "MomOrderServiceImpl [validOrder] 订单操作失败，Mom订单号："+oldOrder.getWiporderno()+",Mom没有下发工序报文信息";
+            return msg;
         }
         //代表当前订单下发包含的所有工位（只有当前这些工位可以生产作业）
         List<String> collect = orderPaths.stream().map(p -> p.getWorkStation()).collect(Collectors.toList());
@@ -966,35 +977,35 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         if(MomProgressStatus.LOADING.equals(putMomOrder.getProgressStatus())){
             int count = momOrderPathDao.getIsRunning(putMomOrder.getLineId(),collect);
             if (count>0) {
-                throw new CustomException(CustomExceptionType.TOKEN_PERRMITRE_ERROR, CustomResponseCode.ERR51.getChinese());
+                msg = "MomOrderServiceImpl [vaildOrder] 产线中已存在执行中的订单,订单结束后可开始";
+                return msg;
             }
         }
 
         List<DzWorkStationManagement> managements = managementService.list(new QueryWrapper<DzWorkStationManagement>()
                         .eq("line_id", putMomOrder.getLineId()).isNotNull("dz_station_code"));
         if(CollectionUtils.isEmpty(managements)){
-            log.error("MomOrderServiceImpl [orderRecover] 恢复订单失败，基础工位配置为null，检查是否配置");
-            throw new CustomException(CustomExceptionType.OK_NO_DATA, CustomResponseCode.ERR49.getChinese());
+            msg = "MomOrderServiceImpl [vaildOrder] 订单操作失败，基础工位配置为null，检查是否配置";
+            return msg;
         }
 
-        String type = null;
         for (DzWorkStationManagement management : managements) {
             for (String s : collect) {
                 if(management.getDzStationCode().equals(s)){
 //                    如果含有关键字“1”或者“A“ 则代表是第一台加工设备
                     if(management.getStationName().contains("1")||management.getStationName().contains("A")){
-                        type = "A";
+                        msg = "A";
                     }else{
-                        type = "B";
+                        msg = "B";
                     }
                 }
             }
         }
-        if(type==null){
-            log.error("MomOrderServiceImpl [orderRecover] Mom下发的工位信息在系统中不存在，工位编号：{}",collect);
-            throw new CustomException(CustomExceptionType.OK_NO_DATA, CustomResponseCode.ERR49.getChinese());
+        if(StringUtils.isEmpty(msg)){
+            msg = "MomOrderServiceImpl [orderRecover] Mom下发的工位信息在系统中不存在，工位编号："+collect;
+            return msg;
         }
-        return type;
+        return msg;
     }
 
 
@@ -1028,16 +1039,16 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
      */
     @Override
     public MomOrder upDateQuantity(MomOrder start, String wipOrderNo, String output) {
-        boolean update = false;
-        int orderOutput = 0;
-
         MomOrder monUpdate = new MomOrder();
-        int quantity = start.getQuantity().intValue();
-        orderOutput = Integer.valueOf(output).intValue();
-        monUpdate.setWiporderno(wipOrderNo);
-        monUpdate.setOrderOutput(orderOutput);
+        try {
+            BeanUtils.copyProperties(start,monUpdate);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        Integer sum = start.getOrderOutput() + Integer.valueOf(output);
+        monUpdate.setOrderOutput(sum);
 
-        if (orderOutput >= quantity) {
+        if (sum >= monUpdate.getQuantity()) {
             monUpdate.setOrderOldState(start.getProgressStatus());
             monUpdate.setProgressStatus(MomProgressStatus.SUCCESS);
             monUpdate.setRealityCompleteDate(new Date());
@@ -1046,18 +1057,8 @@ public class MomOrderServiceImpl extends ServiceImpl<MomOrderDao, MomOrder> impl
         wp.eq("WipOrderNo", wipOrderNo);
         wp.eq("order_id", start.getOrderId());
         wp.eq("line_id", start.getLineId());
-        update = update(monUpdate, wp);
-
-        if (monUpdate.getProgressStatus() != null) {
-            start.setProgressStatus(monUpdate.getProgressStatus());
-            start.setRealityCompleteDate(monUpdate.getRealityCompleteDate());
-        }
-        if (!update) {
-            log.warn("MomOrderServiceImpl [upDateQuantity] 跟新订单: {} 数量: {} 失败", wipOrderNo, output);
-        } else {
-            start.setOrderOutput(orderOutput);
-        }
-        return start;
+        update(monUpdate, wp);
+        return monUpdate;
     }
 
     @Override

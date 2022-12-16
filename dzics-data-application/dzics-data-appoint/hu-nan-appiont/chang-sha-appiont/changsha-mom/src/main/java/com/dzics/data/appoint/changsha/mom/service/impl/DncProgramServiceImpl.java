@@ -149,10 +149,9 @@ public class DncProgramServiceImpl extends ServiceImpl<DncProgramDao, DncProgram
         //获取设备DNC最新一条的请求记录，对比与当前在做订单产品是否一致,是跳过，否添加
         for (DzEquipment equipment : list) {
             DncProgram oldProgram = dncProgramDao.getOneNewDate(momOrder.getLineId(), equipment.getEquipmentNo());
-            if(oldProgram.getMaterialCode().equals(momOrder.getProductNo())){
-                continue;
+            if(!oldProgram.getMaterialCode().equals(momOrder.getProductNo()) || ObjectUtils.isEmpty(oldProgram)){
+                equipments.add(equipment);
             }
-            equipments.add(equipment);
         }
         return this.changeProgram(momOrder, false, equipments);
     }
